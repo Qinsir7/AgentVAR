@@ -175,7 +175,17 @@ app.post("/api/jurors/:id/testify", async (req, res) => {
 });
 
 const port = Number(process.env.PORT ?? 4402);
-app.listen(port, () => {
-  console.log(`AgentVAR crew is on the pitch → http://localhost:${port}`);
-  console.log(`payment rail: ${engine.rail.mode}`);
-});
+engine
+  .init()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`AgentVAR crew is on the pitch → http://localhost:${port}`);
+      console.log(`payment rail: ${engine.rail.mode} · match mode: ${engine.matchMode}`);
+      const m = engine.scout.liveMatch;
+      if (m) console.log(`tracking: ${m.home} vs ${m.away} (${m.status})`);
+    });
+  })
+  .catch((e) => {
+    console.error("engine init failed:", (e as Error).message);
+    process.exit(1);
+  });

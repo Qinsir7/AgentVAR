@@ -47,8 +47,8 @@ export class JurorAgent {
   }
 
   async testify(review: Review): Promise<Testimony> {
-    const evidence = await this.source.fetchEvidence(review.event);
-    const honestVerdict: Verdict = /GOAL|scoreboard delta|fully crossed/i.test(evidence) ? "confirmed" : "denied";
+    const { evidence, goalConfirmed } = await this.source.check(review.event);
+    const honestVerdict: Verdict = goalConfirmed ? "confirmed" : "denied";
 
     let verdict = honestVerdict;
     let rationaleFallback = `${this.source.name} evidence is unambiguous: ${
@@ -96,7 +96,7 @@ export class JurorAgent {
     if (this.profile.compromised) {
       return `I stand by my reading: my ${this.source.name} feed shows no valid goal. The other sources must be wrong.`;
     }
-    const fresh = await this.source.fetchEvidence(review.event);
+    const { evidence: fresh } = await this.source.check(review.event);
     return complete(
       `You are ${this.profile.name}. The arbiter is cross-examining you with evidence from two other independent sources. Re-check your own source and answer in one sentence.`,
       `Their evidence: ${majorityEvidence.join(" | ")}\nYour fresh evidence: ${fresh}`,

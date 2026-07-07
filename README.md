@@ -29,8 +29,8 @@ doesn't. A lying agent isn't slashed or sued — it just didn't make the sale.
 
 | Agent | Role |
 | --- | --- |
-| **Scout** | Watches the match feed and opens a *review* for each key event |
-| **Juror × 3** | Each has its own data source (stats API / broadcast OCR / stadium sensors). Pulls raw evidence, **reasons over it with an LLM**, returns an Ed25519-signed testimony: verdict + confidence + rationale + evidence. Never sees the other jurors' answers |
+| **Scout** | Watches the match feed and opens a *review* for each key event. In **live mode** it tracks a real 2026 World Cup match on the ESPN public feed and can auto-adjudicate new goals as they land |
+| **Juror × 3** | Each has its own data source — in live mode these are **genuinely independent real providers** (ESPN scoreboard / TheSportsDB / football-data.org). Pulls raw evidence, **reasons over it with an LLM**, returns an Ed25519-signed testimony: verdict + confidence + rationale + evidence. Never sees the other jurors' answers |
 | **Arbiter** | Verifies signatures, tallies a 2/3 majority, **cross-examines any dissenter**, announces the ruling stadium-VAR style, anchors it on the `TruthOracle` contract, and settles the economics: pays truthful jurors via x402, withholds the dissenter's fee |
 | **Treasurer** | Calls `ParametricPool.claim()` when a ruling matches the pool's term. The pool re-verifies the ruling on-chain against the TruthOracle, so not even the Treasurer can trigger an unearned payout |
 
@@ -47,6 +47,10 @@ doesn't. A lying agent isn't slashed or sued — it just didn't make the sale.
    buys adjudicated truth with a real x402 payment.
 3. **HTTP API**: `POST /api/adjudicate` (x402-gated, 0.05 USDC) for any
    program that wants jury-verified match facts.
+4. **TypeScript SDK** ([`sdk/`](sdk/)): `AgentVARClient` for prediction
+   markets, betting apps or insurance products — pays x402 fees automatically
+   and verifies juror signatures locally. Try it:
+   `npm run sdk:example` (settles a demo prediction market against the jury).
 
 ```mermaid
 sequenceDiagram
@@ -198,6 +202,24 @@ PAYMENT_RAIL=injective npm start
 Optional: `npm run cctp 1` bridges 1 USDC from Sepolia into the pool via CCTP
 (the funder wallet then also needs Sepolia ETH + USDC).
 
+### Live real-match mode (real 2026 World Cup data)
+
+```bash
+# Adjudicate a real, finished knockout match (e.g. Portugal vs Spain, Jul 6):
+MATCH_MODE=live LIVE_DATE=20260706 LIVE_TEAM=Portugal npm start
+
+# Or watch a match that is in play RIGHT NOW — hands-free:
+MATCH_MODE=live AUTO_ADJUDICATE=true npm start
+```
+
+In live mode the jurors stop reading the recorded fixture and query real,
+independent providers: **ESPN scoreboard** (play-by-play), **TheSportsDB**
+(score-level) and **football-data.org** (set `FOOTBALL_DATA_KEY`, free) or
+the ESPN summary feed as a disclosed fallback. The Scout polls the live feed;
+with `AUTO_ADJUDICATE=true`, every new goal is adjudicated the moment it
+appears — no clicking. Combine with `PAYMENT_RAIL=injective` and every ruling
+about a real World Cup goal lands on-chain.
+
 ### MCP (attach to Cursor / Claude)
 
 ```jsonc
@@ -230,11 +252,14 @@ The full 5-act walkthrough (clean ruling → lie injection → cross-examination
   in-process (tagged `mock` in the UI); `PAYMENT_RAIL=injective` settles real
   USDC via x402, anchors rulings in `TruthOracle` and pays out from
   `ParametricPool` on Injective EVM testnet.
-- **Data sources**: the three jurors read three *differently-shaped* replays
-  of one recorded fixture (`data/fixture.json`), simulating a stats API, a
-  broadcast-OCR pipeline and stadium sensors. Real providers plug in behind
-  the same `DataSource` interface; live match APIs are not called in this
-  build.
+- **Two data modes**: `MATCH_MODE=live` queries real providers about the real
+  2026 World Cup (ESPN / TheSportsDB / football-data.org). Without a
+  `FOOTBALL_DATA_KEY`, juror-3 falls back to ESPN's summary feed — a second
+  endpoint of the same provider, which weakens its independence (disclosed
+  here, and visible in the juror card's source name). `MATCH_MODE=replay`
+  (default) reads three differently-shaped replays of a recorded fixture —
+  deterministic, which is what the filmed demo uses so the lie-injection act
+  is reproducible.
 - **The backdoor is a feature**: `POST /api/demo/arm-lie` makes Juror Charlie
   falsify its next testimony, so the punishment path can be proven on camera.
 - **LLM reasoning**: with `OPENAI_API_KEY` set, juror rationales, cross-exam
@@ -246,15 +271,15 @@ The full 5-act walkthrough (clean ruling → lie injection → cross-examination
 
 ## Roadmap
 
-1. **Live World Cup data** — real providers behind the `DataSource`
-   interface, one per juror.
-2. **Open jury** — dynamic juror registration: install the `agentvar-juror`
+1. **Open jury** — dynamic juror registration: install the `agentvar-juror`
    skill, expose an x402 endpoint, start earning.
-3. **Reputation & pricing** — jurors with clean records charge more; withheld
+2. **Reputation & pricing** — jurors with clean records charge more; withheld
    fees decay a juror's market rate. Reputation is priced, not staked.
-4. **Multiple pools & terms** — factory contract for parametric terms; CCTP
+3. **Multiple pools & terms** — factory contract for parametric terms; CCTP
    hooks so cross-chain deposits auto-register a term.
-5. **More event types** — cards, penalties, VAR overturns, substitutions.
+4. **More event types** — cards, penalties, VAR overturns, substitutions.
+5. **Published SDK** — ship `sdk/` as an npm package with typed webhooks for
+   market-settlement pipelines.
 
 ## Repo structure
 
@@ -262,11 +287,12 @@ The full 5-act walkthrough (clean ruling → lie injection → cross-examination
 contracts/         TruthOracle.sol, ParametricPool.sol (+ compiled artifacts)
 scripts/           compile, setup-wallets, deploy, cctp-fund-pool, smoke
 src/
-  agents/          juror, arbiter, scout, treasurer, data sources
+  agents/          juror, arbiter, scout, treasurer, replay + live data sources
   shared/          types, event bus, signing, payment rails, chain, on-chain calls, LLM
   mcp/server.ts    MCP server (consumer + juror roles)
   engine.ts        wires the crew, keeps auditable state
   server.ts        HTTP API + x402 middleware + SSE + dashboard
+sdk/               AgentVARClient (x402-paying TypeScript client) + examples
 public/            landing page + Match Control Room dashboard
 skills/            agentvar-juror Agent Skill
 data/              recorded match fixture (POR vs ESP)

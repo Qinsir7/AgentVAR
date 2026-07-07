@@ -5,6 +5,7 @@
 import { Engine } from "../src/engine.js";
 
 const engine = new Engine();
+await engine.init();
 const assert = (cond: boolean, msg: string) => {
   if (!cond) throw new Error(`SMOKE FAIL: ${msg}`);
   console.log(`✓ ${msg}`);

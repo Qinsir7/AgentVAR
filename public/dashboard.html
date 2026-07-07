@@ -266,13 +266,14 @@
   <a class="brand" href="/"><span class="dot"></span>Agent<em>VAR</em><span class="back">← home</span></a>
 
   <div class="scoreboard">
-    <span class="team">PORTUGAL</span>
+    <span class="team" id="team-home">PORTUGAL</span>
     <span class="score"><em id="score-home">0</em> : <em id="score-away">0</em></span>
-    <span class="team">SPAIN</span>
+    <span class="team" id="team-away">SPAIN</span>
     <span class="clock" id="clock">0'</span>
   </div>
 
   <div class="top-right">
+    <span class="rail-badge mock" id="mode">…</span>
     <span class="rail-badge mock" id="rail">…</span>
     <button class="btn btn-danger" id="arm">🕳 Inject lie · Charlie</button>
     <button class="btn btn-primary" id="advance"><span class="spinner"></span><span id="advance-label">▶ Next match event</span></button>
@@ -332,7 +333,8 @@
 const $ = (s) => document.querySelector(s);
 const jurorsEl = $("#jurors"), streamEl = $("#stream"), receiptsEl = $("#receipts");
 const jurorCards = {}, reviewBlocks = {}, reviewEvents = {};
-const score = { Portugal: 0, Spain: 0 };
+let teams = { home: "Portugal", away: "Spain" };
+const score = {};
 const initials = { "juror-1": "AL", "juror-2": "BR", "juror-3": "CH" };
 
 function esc(s) { const d = document.createElement("span"); d.textContent = s ?? ""; return d.innerHTML; }
@@ -423,8 +425,7 @@ function onMessage(msg) {
     const ev = reviewEvents[p.reviewId];
     if (p.verdict === "confirmed" && ev && score[ev.team] !== undefined) {
       score[ev.team] += 1;
-      $("#score-home").textContent = score.Portugal;
-      $("#score-away").textContent = score.Spain;
+      renderScore();
     }
   }
 
@@ -457,6 +458,7 @@ function onMessage(msg) {
 }
 
 let refreshTimer;
+let autoMode = false;
 function refreshSummary() {
   clearTimeout(refreshTimer);
   refreshTimer = setTimeout(async () => {
@@ -467,7 +469,10 @@ function refreshSummary() {
     $("#s-payouts").textContent = s.summary.payouts;
     renderTerm(s.term);
     const btn = $("#advance");
-    if (s.remainingEvents === 0) {
+    if (autoMode) {
+      btn.disabled = true;
+      $("#advance-label").textContent = "👁 Auto-watching live feed";
+    } else if (s.remainingEvents === 0 && s.matchMode !== "live") {
       btn.disabled = true;
       $("#advance-label").textContent = "🏁 Full time";
     }
@@ -495,11 +500,35 @@ $("#arm").addEventListener("click", async () => {
   btn.disabled = true;
 });
 
+function renderScore() {
+  $("#score-home").textContent = score[teams.home] ?? 0;
+  $("#score-away").textContent = score[teams.away] ?? 0;
+}
+
 (async function init() {
   const s = await (await fetch("/api/state")).json();
   const rail = $("#rail");
   rail.textContent = s.paymentRail === "injective" ? "Injective EVM Testnet" : "Mock rail";
   rail.className = "rail-badge " + s.paymentRail;
+
+  const mode = $("#mode");
+  if (s.matchMode === "live") {
+    mode.textContent = s.autoAdjudicate ? "LIVE · auto-watch" : "LIVE data";
+    mode.className = "rail-badge injective";
+    if (s.liveMatch) teams = { home: s.liveMatch.home, away: s.liveMatch.away };
+  } else {
+    mode.textContent = "Replay fixture";
+    mode.className = "rail-badge mock";
+  }
+  score[teams.home] = 0; score[teams.away] = 0;
+  $("#team-home").textContent = teams.home.toUpperCase();
+  $("#team-away").textContent = teams.away.toUpperCase();
+  if (s.matchMode === "live" && s.autoAdjudicate) {
+    autoMode = true;
+    $("#advance-label").textContent = "👁 Auto-watching live feed";
+    $("#advance").disabled = true;
+  }
+
   s.jurors.forEach(renderJuror);
   renderTerm(s.term);
 
@@ -510,8 +539,7 @@ $("#arm").addEventListener("click", async () => {
     if (ruling?.verdict === "confirmed" && score[rv.event.team] !== undefined) score[rv.event.team] += 1;
     if (rv.event?.minute) $("#clock").textContent = rv.event.minute + "'";
   }
-  $("#score-home").textContent = score.Portugal;
-  $("#score-away").textContent = score.Spain;
+  renderScore();
   refreshSummary();
 
   new EventSource("/api/events").onmessage = (e) => onMessage(JSON.parse(e.data));

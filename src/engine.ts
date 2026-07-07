@@ -6,6 +6,7 @@ import { ArbiterAgent } from "./agents/arbiter.js";
 import { ScoutAgent } from "./agents/scout.js";
 import { TreasurerAgent } from "./agents/treasurer.js";
 import { statsFeed, broadcastOcr, stadiumSensors } from "./agents/sources.js";
+import { espnScoreboard, theSportsDb, footballDataOrSummary } from "./agents/livesources.js";
 
 /**
  * Wires the whole crew together and keeps queryable state for the dashboard
@@ -14,12 +15,20 @@ import { statsFeed, broadcastOcr, stadiumSensors } from "./agents/sources.js";
  * for a one-command demo (see README disclosure).
  */
 export class Engine {
+  readonly matchMode: "replay" | "live" = process.env.MATCH_MODE === "live" ? "live" : "replay";
   readonly rail = createPaymentRail();
-  readonly jurors = [
-    new JurorAgent("juror-1", "Juror Alpha", statsFeed),
-    new JurorAgent("juror-2", "Juror Bravo", broadcastOcr),
-    new JurorAgent("juror-3", "Juror Charlie", stadiumSensors, /* compromisable */ true),
-  ];
+  readonly jurors =
+    this.matchMode === "live"
+      ? [
+          new JurorAgent("juror-1", "Juror Alpha", espnScoreboard),
+          new JurorAgent("juror-2", "Juror Bravo", theSportsDb),
+          new JurorAgent("juror-3", "Juror Charlie", footballDataOrSummary, /* compromisable */ true),
+        ]
+      : [
+          new JurorAgent("juror-1", "Juror Alpha", statsFeed),
+          new JurorAgent("juror-2", "Juror Bravo", broadcastOcr),
+          new JurorAgent("juror-3", "Juror Charlie", stadiumSensors, /* compromisable */ true),
+        ];
   readonly scout = new ScoutAgent();
   readonly arbiter = new ArbiterAgent(this.jurors, this.rail);
   readonly treasurer = new TreasurerAgent(this.rail);
@@ -37,6 +46,20 @@ export class Engine {
       if (msg.type === "testimony") this.testimonies.push(msg.payload as Testimony);
       if (msg.type === "receipt") this.receipts.push(msg.payload as PaymentReceipt);
     });
+  }
+
+  /** Discover the tracked match (live mode) and hook up auto-adjudication. */
+  async init(): Promise<void> {
+    let autoQueue: Promise<unknown> = Promise.resolve();
+    this.scout.onAutoEvent = (review) => {
+      // serialize: goals discovered in the same poll are adjudicated one by one
+      autoQueue = autoQueue.then(() =>
+        this.runReview(review).catch((e) =>
+          bus.publish("log", { agent: "engine", msg: `auto-adjudication failed: ${(e as Error).message}` })
+        )
+      );
+    };
+    await this.scout.init();
   }
 
   /** Advance the match by one event and run the full adjudication pipeline. */
@@ -74,6 +97,9 @@ export class Engine {
   state() {
     return {
       paymentRail: this.rail.mode,
+      matchMode: this.matchMode,
+      liveMatch: this.scout.liveMatch,
+      autoAdjudicate: process.env.AUTO_ADJUDICATE === "true",
       jurors: this.jurors.map((j) => j.profile),
       reviews: this.reviews,
       rulings: this.rulings,
