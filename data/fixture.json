@@ -1,0 +1,35 @@
+{
+  "match": {
+    "id": "wc2026-por-esp",
+    "home": "Portugal",
+    "away": "Spain",
+    "venue": "MetLife Stadium",
+    "kickoff": "2026-07-08T19:00:00Z"
+  },
+  "events": [
+    {
+      "id": "evt-1",
+      "type": "goal",
+      "minute": 23,
+      "team": "Portugal",
+      "player": "R. Leão",
+      "description": "Left-footed strike from inside the box, assisted by B. Fernandes"
+    },
+    {
+      "id": "evt-2",
+      "type": "goal",
+      "minute": 58,
+      "team": "Spain",
+      "player": "Lamine Yamal",
+      "description": "Curled shot from the right wing into the far corner"
+    },
+    {
+      "id": "evt-3",
+      "type": "goal",
+      "minute": 74,
+      "team": "Portugal",
+      "player": "G. Ramos",
+      "description": "Header from a corner kick at the near post"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "agentvar",
+  "version": "0.1.0",
+  "description": "AgentVAR — an autonomous AI referee crew for World Cup truth, paid per honest testimony via Injective x402",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "mcp": "tsx src/mcp/server.ts",
+    "mcp:juror": "MCP_ROLE=juror tsx src/mcp/server.ts",
+    "compile": "tsx scripts/compile.ts",
+    "setup": "tsx scripts/setup-wallets.ts",
+    "deploy": "tsx scripts/deploy.ts",
+    "cctp": "tsx scripts/cctp-fund-pool.ts",
+    "typecheck": "tsc --noEmit",
+    "smoke": "tsx scripts/smoke.ts"
+  },
+  "dependencies": {
+    "@injectivelabs/x402": "^0.0.1",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "dotenv": "^17.4.2",
+    "express": "^4.19.0",
+    "solc": "^0.8.28",
+    "viem": "^2.54.6",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}

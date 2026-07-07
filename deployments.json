@@ -1,0 +1,20 @@
+{
+  "chainId": 1439,
+  "truthOracle": "0x9106cFA018fE4E26C1745B709A4B7C261e89DE8f",
+  "parametricPool": "0x0F2133B65e35e83d0B32C290D6eD332bFE87c937",
+  "usdc": "0x0C382e685bbeeFE5d3d9C29e29E341fEE8E84C5d",
+  "term": {
+    "team": "Portugal",
+    "afterMinute": 45,
+    "beforeMinute": 75,
+    "payoutUsdc": 1,
+    "beneficiary": "0x6A955F252d2B140f5baB5E314e3cEB4930D09Fd8",
+    "description": "Pays 1 USDC if Portugal scores in the second half before the 75th minute"
+  },
+  "deployedAt": "2026-07-07T17:29:47.434Z",
+  "txs": {
+    "deployTruthOracle": "0x7794998b2e92d535df72e94e429e48320dbf9d4b40bd057b6928fb225087fe32",
+    "deployParametricPool": "0xbf64aa129ba110f07a663c2243514c642161583a91d28c8731ff5d92c08b95e7",
+    "fundPool": "0xf31bb1e33afcfe6157bd7052030f0f1a20c23a4b4b5dbde6b37c37d721e3cd36"
+  }
+}

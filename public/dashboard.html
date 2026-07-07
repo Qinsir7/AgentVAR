@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AgentVAR — Match Control Room</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #070a08;
+    --bg-soft: #0c110e;
+    --panel: #0e1410;
+    --line: rgba(120, 160, 135, 0.14);
+    --line-strong: rgba(120, 160, 135, 0.3);
+    --text: #edf3ee;
+    --dim: #93a89a;
+    --faint: #5c6f63;
+    --green: #34d27b;
+    --green-soft: rgba(52, 210, 123, 0.12);
+    --gold: #e8c268;
+    --gold-soft: rgba(232, 194, 104, 0.1);
+    --red: #f0555b;
+    --red-soft: rgba(240, 85, 91, 0.1);
+    --blue: #6ab7ff;
+    --display: "Space Grotesk", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--display); font-size: 14px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 40;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
+    padding: 0 24px; height: 66px;
+    background: rgba(7,10,8,.85); backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 10px; color: var(--text); }
+  .brand:hover { text-decoration: none; }
+  .brand .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); }
+  .brand em { color: var(--green); font-style: normal; }
+  .brand .back { font-size: 12px; color: var(--faint); font-weight: 400; margin-left: 4px; }
+
+  .scoreboard {
+    display: flex; align-items: center; gap: 18px;
+    font-family: var(--mono);
+    border: 1px solid var(--line-strong); border-radius: 12px;
+    padding: 8px 22px; background: var(--panel);
+  }
+  .scoreboard .team { font-size: 13px; letter-spacing: .12em; color: var(--dim); }
+  .scoreboard .score { font-size: 24px; font-weight: 600; color: var(--text); min-width: 62px; text-align: center; }
+  .scoreboard .score em { color: var(--green); font-style: normal; }
+  .scoreboard .clock { font-size: 11px; color: var(--gold); border: 1px solid rgba(232,194,104,.3); border-radius: 6px; padding: 2px 8px; }
+
+  .top-right { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+  .rail-badge {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    padding: 5px 12px; border-radius: 8px;
+  }
+  .rail-badge.mock { color: var(--gold); background: var(--gold-soft); border: 1px solid rgba(232,194,104,.3); }
+  .rail-badge.injective { color: var(--green); background: var(--green-soft); border: 1px solid rgba(52,210,123,.35); }
+
+  .btn {
+    font-family: var(--display); font-weight: 600; font-size: 13.5px;
+    padding: 9px 18px; border-radius: 10px; cursor: pointer;
+    border: 1px solid transparent; transition: all .15s ease;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn:disabled { opacity: .45; cursor: default; transform: none !important; }
+  .btn-primary { background: var(--green); color: #06130b; }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(52,210,123,.35); }
+  .btn-danger { background: transparent; border-color: rgba(240,85,91,.4); color: var(--red); }
+  .btn-danger:hover:not(:disabled) { background: var(--red-soft); }
+  .btn .spinner {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid rgba(6,19,11,.3); border-top-color: #06130b;
+    animation: spin .7s linear infinite; display: none;
+  }
+  .btn.busy .spinner { display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- layout ---------- */
+  .layout {
+    display: grid; grid-template-columns: 320px 1fr; gap: 18px;
+    max-width: 1480px; margin: 0 auto; padding: 20px 24px 26px;
+    align-items: start;
+  }
+  .col-left { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 86px; }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 18px; border-bottom: 1px solid var(--line);
+  }
+  .panel-head h2 {
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    letter-spacing: .16em; text-transform: uppercase; color: var(--faint);
+  }
+  .panel-head .hint { font-size: 11px; color: var(--faint); font-family: var(--mono); }
+  .panel-body { padding: 14px; }
+
+  /* ---------- jury ---------- */
+  .juror {
+    border: 1px solid var(--line); border-radius: 13px; padding: 16px 16px 14px;
+    background: var(--bg-soft); transition: border-color .3s, box-shadow .3s;
+    margin-bottom: 10px;
+  }
+  .juror:last-child { margin-bottom: 0; }
+  .juror.flash { border-color: var(--green); box-shadow: 0 0 0 1px var(--green), 0 0 24px rgba(52,210,123,.15); }
+  .juror.compromised { border-color: rgba(240,85,91,.5); }
+  .juror-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .juror .avatar {
+    width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center;
+    font-family: var(--mono); font-weight: 600; font-size: 15px;
+    background: var(--green-soft); color: var(--green); border: 1px solid rgba(52,210,123,.25);
+    flex-shrink: 0;
+  }
+  .juror.compromised .avatar { background: var(--red-soft); color: var(--red); border-color: rgba(240,85,91,.35); }
+  .juror .name { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+  .juror .src { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 1px; }
+  .badge-compromised {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: .08em;
+    color: var(--red); background: var(--red-soft); border: 1px solid rgba(240,85,91,.35);
+    border-radius: 5px; padding: 1.5px 6px;
+  }
+  .juror-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .jstat { background: rgba(120,160,135,.05); border-radius: 9px; padding: 8px 10px; }
+  .jstat .v { font-family: var(--mono); font-size: 16px; font-weight: 600; }
+  .jstat .v.earn { color: var(--gold); }
+  .jstat .v.withheld { color: var(--red); }
+  .jstat .k { font-size: 10px; color: var(--faint); margin-top: 1px; letter-spacing: .04em; }
+
+  /* summary card */
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .sum { background: rgba(120,160,135,.05); border-radius: 10px; padding: 12px 14px; }
+  .sum .v { font-family: var(--mono); font-size: 22px; font-weight: 600; color: var(--text); }
+  .sum .k { font-size: 11px; color: var(--faint); margin-top: 2px; }
+  .sum.warn .v { color: var(--red); }
+  .sum.gold .v { color: var(--gold); }
+
+  /* term card */
+  .term { font-size: 13px; color: var(--dim); line-height: 1.6; }
+  .term .desc { color: var(--text); font-weight: 500; margin-bottom: 8px; }
+  .term .row { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11.5px; padding: 3px 0; }
+  .term .row .k { color: var(--faint); }
+  .term .status-armed { color: var(--green); }
+  .term .status-paid { color: var(--gold); }
+
+  /* ---------- review stream ---------- */
+  .stream { display: flex; flex-direction: column; gap: 14px; padding: 14px; min-height: 300px; }
+  .empty {
+    color: var(--faint); text-align: center; padding: 70px 20px; font-size: 14px;
+  }
+  .empty .big { font-size: 34px; margin-bottom: 12px; }
+  .review {
+    border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden;
+    background: var(--bg-soft);
+    animation: slideIn .35s ease;
+  }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+  .review-head {
+    display: flex; align-items: center; gap: 12px; padding: 13px 18px;
+    background: rgba(106,183,255,.05); border-bottom: 1px solid var(--line);
+  }
+  .review-head .live {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .1em; color: var(--blue);
+    border: 1px solid rgba(106,183,255,.35); border-radius: 5px; padding: 2px 7px;
+  }
+  .review-head .q { font-weight: 600; font-size: 14.5px; }
+  .review-head .rid { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .review-body { padding: 8px 18px 14px; }
+
+  .testimony {
+    display: grid; grid-template-columns: auto auto 1fr; gap: 12px; align-items: start;
+    padding: 10px 0; border-bottom: 1px dashed var(--line);
+    animation: slideIn .3s ease;
+  }
+  .testimony:last-of-type { border-bottom: 0; }
+  .testimony .who { font-family: var(--mono); font-size: 12px; color: var(--dim); padding-top: 2px; white-space: nowrap; }
+  .chip {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: .06em;
+    padding: 3px 9px; border-radius: 6px; white-space: nowrap;
+  }
+  .chip.confirmed { color: var(--green); background: var(--green-soft); border: 1px solid rgba(52,210,123,.3); }
+  .chip.denied { color: var(--red); background: var(--red-soft); border: 1px solid rgba(240,85,91,.3); }
+  .testimony .why { font-size: 13px; color: var(--dim); }
+  .testimony .why .conf { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+
+  .crossexam {
+    margin: 12px 0 4px; padding: 12px 16px; border-radius: 11px;
+    border: 1px dashed rgba(232,194,104,.45); background: var(--gold-soft);
+    font-size: 13px; color: var(--gold); line-height: 1.6;
+    animation: slideIn .3s ease;
+  }
+  .crossexam .label { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; margin-bottom: 5px; }
+  .crossexam .answer { color: var(--dim); font-style: italic; }
+
+  .announcement {
+    margin-top: 12px; padding: 14px 18px; border-radius: 11px;
+    background: linear-gradient(90deg, var(--green-soft), transparent 70%);
+    border: 1px solid rgba(52,210,123,.4);
+    font-weight: 600; font-size: 14px; line-height: 1.55;
+    animation: slideIn .3s ease;
+  }
+  .announcement.denied { background: linear-gradient(90deg, var(--red-soft), transparent 70%); border-color: rgba(240,85,91,.4); }
+  .announcement .anchor { display: inline-block; margin-top: 6px; font-family: var(--mono); font-size: 11.5px; font-weight: 400; }
+
+  .payout {
+    margin-top: 10px; padding: 14px 18px; border-radius: 11px;
+    border: 1px solid rgba(232,194,104,.5); background: var(--gold-soft);
+    color: var(--gold); font-weight: 600; font-size: 14px;
+    animation: slideIn .3s ease;
+  }
+  .payout .sub { font-weight: 400; font-size: 12px; color: var(--dim); margin-top: 4px; }
+
+  /* ---------- receipts ---------- */
+  .receipts { max-height: 300px; overflow-y: auto; }
+  .rcpt {
+    display: grid; grid-template-columns: 86px 100px 1fr auto auto; gap: 14px; align-items: center;
+    font-family: var(--mono); font-size: 12px;
+    padding: 9px 18px; border-bottom: 1px solid var(--line);
+    animation: slideIn .25s ease;
+  }
+  .rcpt:last-child { border-bottom: 0; }
+  .rcpt .status { font-size: 10.5px; font-weight: 600; letter-spacing: .06em; }
+  .rcpt .status.settled { color: var(--green); }
+  .rcpt .status.withheld { color: var(--red); }
+  .rcpt .amt { color: var(--gold); }
+  .rcpt .flow-desc { color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rcpt .kind {
+    font-size: 9.5px; color: var(--faint); border: 1px solid var(--line); border-radius: 5px;
+    padding: 2px 7px; white-space: nowrap;
+  }
+  .rcpt .tx { font-size: 11px; white-space: nowrap; }
+  .rcpt .tx .mock-tag { color: var(--faint); }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(120,160,135,.2); border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  @media (max-width: 1080px) {
+    .layout { grid-template-columns: 1fr; }
+    .col-left { position: static; }
+    .topbar { grid-template-columns: auto 1fr; }
+    .scoreboard { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="/"><span class="dot"></span>Agent<em>VAR</em><span class="back">← home</span></a>
+
+  <div class="scoreboard">
+    <span class="team">PORTUGAL</span>
+    <span class="score"><em id="score-home">0</em> : <em id="score-away">0</em></span>
+    <span class="team">SPAIN</span>
+    <span class="clock" id="clock">0'</span>
+  </div>
+
+  <div class="top-right">
+    <span class="rail-badge mock" id="rail">…</span>
+    <button class="btn btn-danger" id="arm">🕳 Inject lie · Charlie</button>
+    <button class="btn btn-primary" id="advance"><span class="spinner"></span><span id="advance-label">▶ Next match event</span></button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="col-left">
+    <div class="panel">
+      <div class="panel-head"><h2>The Jury</h2><span class="hint">1 source each · paid per truth</span></div>
+      <div class="panel-body" id="jurors"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Match report</h2></div>
+      <div class="panel-body summary-grid">
+        <div class="sum"><div class="v" id="s-reviews">0</div><div class="k">reviews ruled</div></div>
+        <div class="sum"><div class="v" id="s-testimonies">0</div><div class="k">testimonies</div></div>
+        <div class="sum warn"><div class="v" id="s-withheld">0</div><div class="k">fees withheld</div></div>
+        <div class="sum gold"><div class="v" id="s-payouts">0</div><div class="k">parametric payouts</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Parametric term</h2></div>
+      <div class="panel-body term" id="term">
+        <div class="desc">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-right">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Review stream</h2>
+        <span class="hint">testimony → cross-examination → ruling</span>
+      </div>
+      <div class="stream" id="stream">
+        <div class="empty" id="empty">
+          <div class="big">📺</div>
+          The jury is seated. Press <b style="color:var(--green)">▶ Next match event</b> to open the first review.
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:18px">
+      <div class="panel-head">
+        <h2>x402 receipts</h2>
+        <span class="hint">every testimony is a metered payment</span>
+      </div>
+      <div class="receipts" id="receipts"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const jurorsEl = $("#jurors"), streamEl = $("#stream"), receiptsEl = $("#receipts");
+const jurorCards = {}, reviewBlocks = {}, reviewEvents = {};
+const score = { Portugal: 0, Spain: 0 };
+const initials = { "juror-1": "AL", "juror-2": "BR", "juror-3": "CH" };
+
+function esc(s) { const d = document.createElement("span"); d.textContent = s ?? ""; return d.innerHTML; }
+
+function renderJuror(p) {
+  let card = jurorCards[p.id];
+  if (!card) {
+    card = document.createElement("div");
+    card.className = "juror";
+    jurorsEl.appendChild(card);
+    jurorCards[p.id] = card;
+  }
+  card.classList.toggle("compromised", p.compromised);
+  card.innerHTML = `
+    <div class="juror-top">
+      <div class="avatar">${initials[p.id] ?? "J"}</div>
+      <div>
+        <div class="name">${esc(p.name)} ${p.compromised ? '<span class="badge-compromised">COMPROMISED</span>' : ""}</div>
+        <div class="src">${esc(p.sourceName)}</div>
+      </div>
+    </div>
+    <div class="juror-stats">
+      <div class="jstat"><div class="v earn">${p.earnedUsdc.toFixed(2)}</div><div class="k">USDC earned</div></div>
+      <div class="jstat"><div class="v">${p.testimonies}</div><div class="k">testimonies</div></div>
+      <div class="jstat"><div class="v withheld">${p.withheld}</div><div class="k">withheld</div></div>
+    </div>`;
+  card.classList.add("flash");
+  setTimeout(() => card.classList.remove("flash"), 1000);
+}
+
+function renderTerm(term) {
+  $("#term").innerHTML = `
+    <div class="desc">${esc(term.description)}</div>
+    <div class="row"><span class="k">beneficiary</span><span>${esc(String(term.beneficiary).slice(0, 10))}…</span></div>
+    <div class="row"><span class="k">window</span><span>${term.afterMinute}' – ${term.beforeMinute}'</span></div>
+    <div class="row"><span class="k">status</span><span class="${term.triggered ? "status-paid" : "status-armed"}">${term.triggered ? "PAID OUT ✓" : "ARMED — watching rulings"}</span></div>`;
+}
+
+function onMessage(msg) {
+  const p = msg.payload;
+  if (msg.type === "juror-update") renderJuror(p);
+
+  if (msg.type === "review-opened") {
+    $("#empty")?.remove();
+    reviewEvents[p.id] = p.event;
+    const div = document.createElement("div");
+    div.className = "review";
+    div.innerHTML = `
+      <div class="review-head">
+        <span class="live">VAR REVIEW</span>
+        <span class="q">${esc(p.question)}</span>
+        <span class="rid">${esc(p.id)}</span>
+      </div>
+      <div class="review-body"></div>`;
+    streamEl.prepend(div);
+    reviewBlocks[p.id] = div.querySelector(".review-body");
+    if (p.event?.minute) $("#clock").textContent = p.event.minute + "'";
+  }
+
+  if (msg.type === "testimony") {
+    const body = reviewBlocks[p.reviewId]; if (!body) return;
+    const t = document.createElement("div");
+    t.className = "testimony";
+    t.innerHTML = `
+      <span class="who">${esc(p.jurorId)}</span>
+      <span class="chip ${p.verdict}">${p.verdict.toUpperCase()}</span>
+      <span class="why">${esc(p.rationale)} <span class="conf">· confidence ${p.confidence}</span></span>`;
+    body.appendChild(t);
+  }
+
+  if (msg.type === "cross-examination") {
+    const body = reviewBlocks[p.reviewId]; if (!body) return;
+    const c = document.createElement("div");
+    c.className = "crossexam";
+    c.innerHTML = `
+      <div class="label">⚖️ CROSS-EXAMINATION — ${esc(p.jurorId)}</div>
+      ${esc(p.question)}<br/><span class="answer">↳ "${esc(p.answer)}"</span>`;
+    body.appendChild(c);
+  }
+
+  if (msg.type === "ruling") {
+    const body = reviewBlocks[p.reviewId]; if (!body) return;
+    const a = document.createElement("div");
+    a.className = "announcement" + (p.verdict === "denied" ? " denied" : "");
+    a.innerHTML = `📣 ${esc(p.announcement)}` +
+      (p.anchorExplorerUrl ? `<br/><a class="anchor" href="${p.anchorExplorerUrl}" target="_blank">⛓ TruthOracle anchor on Injective ↗</a>` : "");
+    body.appendChild(a);
+    const ev = reviewEvents[p.reviewId];
+    if (p.verdict === "confirmed" && ev && score[ev.team] !== undefined) {
+      score[ev.team] += 1;
+      $("#score-home").textContent = score.Portugal;
+      $("#score-away").textContent = score.Spain;
+    }
+  }
+
+  if (msg.type === "payout") {
+    const body = reviewBlocks[p.reviewId]; if (!body) return;
+    const pay = document.createElement("div");
+    pay.className = "payout";
+    pay.innerHTML = `💸 PARAMETRIC PAYOUT — ${p.receipt.amountUsdc} USDC → ${esc(String(p.term.beneficiary).slice(0, 12))}…
+      <div class="sub">"${esc(p.term.description)}" · verified on-chain against the TruthOracle · no claims, no disputes, no humans
+      ${p.receipt.explorerUrl ? ` · <a href="${p.receipt.explorerUrl}" target="_blank">view tx ↗</a>` : ""}</div>`;
+    body.appendChild(pay);
+  }
+
+  if (msg.type === "receipt") {
+    const r = document.createElement("div");
+    r.className = "rcpt";
+    const tx = p.explorerUrl
+      ? `<a href="${p.explorerUrl}" target="_blank">${(p.txHash ?? "").slice(0, 12)}… ↗</a>`
+      : (p.txHash ? `<span class="mock-tag">${p.txHash.slice(0, 12)}… (mock)</span>` : "");
+    r.innerHTML = `
+      <span class="status ${p.status}">${p.status === "settled" ? "● PAID" : "○ WITHHELD"}</span>
+      <span class="amt">${p.amountUsdc} USDC</span>
+      <span class="flow-desc">${esc(p.from)} → ${esc(p.to)} · ${esc(p.note)}</span>
+      <span class="kind">${p.kind}</span>
+      <span class="tx">${tx}</span>`;
+    receiptsEl.prepend(r);
+  }
+
+  refreshSummary();
+}
+
+let refreshTimer;
+function refreshSummary() {
+  clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(async () => {
+    const s = await (await fetch("/api/state")).json();
+    $("#s-reviews").textContent = s.summary.reviews;
+    $("#s-testimonies").textContent = s.summary.testimonies;
+    $("#s-withheld").textContent = s.summary.withheld;
+    $("#s-payouts").textContent = s.summary.payouts;
+    renderTerm(s.term);
+    const btn = $("#advance");
+    if (s.remainingEvents === 0) {
+      btn.disabled = true;
+      $("#advance-label").textContent = "🏁 Full time";
+    }
+  }, 150);
+}
+
+$("#advance").addEventListener("click", async () => {
+  const btn = $("#advance"), label = $("#advance-label");
+  btn.disabled = true; btn.classList.add("busy");
+  const injective = $("#rail").classList.contains("injective");
+  label.textContent = injective ? "Settling on Injective…" : "Adjudicating…";
+  try { await fetch("/api/demo/advance", { method: "POST" }); }
+  finally {
+    btn.classList.remove("busy");
+    label.textContent = "▶ Next match event";
+    btn.disabled = false;
+    refreshSummary();
+  }
+});
+
+$("#arm").addEventListener("click", async () => {
+  const btn = $("#arm");
+  await fetch("/api/demo/arm-lie", { method: "POST" });
+  btn.textContent = "⚠️ Lie armed — next testimony";
+  btn.disabled = true;
+});
+
+(async function init() {
+  const s = await (await fetch("/api/state")).json();
+  const rail = $("#rail");
+  rail.textContent = s.paymentRail === "injective" ? "Injective EVM Testnet" : "Mock rail";
+  rail.className = "rail-badge " + s.paymentRail;
+  s.jurors.forEach(renderJuror);
+  renderTerm(s.term);
+
+  // rebuild score/clock from already-ruled reviews (page refresh mid-match)
+  for (const rv of s.reviews) {
+    reviewEvents[rv.id] = rv.event;
+    const ruling = s.rulings.find((r) => r.reviewId === rv.id);
+    if (ruling?.verdict === "confirmed" && score[rv.event.team] !== undefined) score[rv.event.team] += 1;
+    if (rv.event?.minute) $("#clock").textContent = rv.event.minute + "'";
+  }
+  $("#score-home").textContent = score.Portugal;
+  $("#score-away").textContent = score.Spain;
+  refreshSummary();
+
+  new EventSource("/api/events").onmessage = (e) => onMessage(JSON.parse(e.data));
+})();
+</script>
+</body>
+</html>
