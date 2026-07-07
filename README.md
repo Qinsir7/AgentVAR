@@ -238,11 +238,22 @@ about a real World Cup goal lands on-chain.
 Requires `npm start` running. In injective mode the MCP consumer pays with
 `CONSUMER_PRIVATE_KEY` (created by `npm run setup`).
 
-### Demo
+### Demo walkthrough (5 acts, one ▶ click each)
 
-The full 5-act walkthrough (clean ruling → lie injection → cross-examination
-→ parametric payout → full-time report) is in
-[`docs/demo-script.md`](docs/demo-script.md).
+The replay fixture is the real Argentina 3-2 Egypt Round-of-16 comeback.
+Open http://localhost:4402/dashboard and:
+
+1. **Clean ruling** — ▶ once (Egypt 15'): three testimonies with rationale,
+   3/3 confirmed, three `PAID 0.01 USDC` receipts land.
+2. **Inject the lie** — click 🕳 *Inject lie · Charlie*, then ▶ (Egypt 67'):
+   Charlie denies the goal, gets cross-examined, ruling still lands 2/3 —
+   and Charlie's fee is `WITHHELD`.
+3. **Truth becomes money** — ▶ (Argentina 79'): ruling confirmed and the
+   parametric pool pays out automatically (gold banner + payout receipt).
+4. **The comeback** — ▶ twice (Messi 83', Enzo 90'+2'): both confirmed;
+   button flips to 🏁 Full time.
+5. **Receipts** — in injective mode every receipt and ruling links to a real
+   transaction on the Injective testnet explorer.
 
 ---
 
@@ -297,5 +308,4 @@ sdk/               AgentVARClient (x402-paying TypeScript client) + examples
 public/            landing page + Match Control Room dashboard
 skills/            agentvar-juror Agent Skill
 data/              recorded real-match fixture (Argentina 3-2 Egypt, R16)
-docs/              demo script
 ```
