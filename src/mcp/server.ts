@@ -56,7 +56,7 @@ async function postJson(path: string, body: unknown) {
 }
 
 const eventArgs = {
-  team: z.string().describe("Team name, e.g. 'Portugal'"),
+  team: z.string().describe("Team name, e.g. 'Argentina'"),
   minute: z.number().describe("Match minute of the claimed goal"),
   player: z.string().optional().describe("Scorer, if known"),
 };

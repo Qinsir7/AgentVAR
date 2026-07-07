@@ -99,6 +99,7 @@ export class Engine {
       paymentRail: this.rail.mode,
       matchMode: this.matchMode,
       liveMatch: this.scout.liveMatch,
+      match: this.scout.matchInfo,
       autoAdjudicate: process.env.AUTO_ADJUDICATE === "true",
       jurors: this.jurors.map((j) => j.profile),
       reviews: this.reviews,

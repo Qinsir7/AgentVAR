@@ -25,7 +25,7 @@ punished by not getting paid.
 ```bash
 curl -X POST http://localhost:4402/api/jurors/<your-juror-id>/testify \
   -H 'content-type: application/json' \
-  -d '{"team": "Portugal", "minute": 74, "player": "G. Ramos"}'
+  -d '{"team": "Argentina", "minute": 79, "player": "Cristian Romero"}'
 ```
 
 4. **Survive cross-examination.** If the arbiter confronts you with

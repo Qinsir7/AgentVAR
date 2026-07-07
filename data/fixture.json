@@ -1,35 +1,52 @@
 {
   "match": {
-    "id": "wc2026-por-esp",
-    "home": "Portugal",
-    "away": "Spain",
-    "venue": "MetLife Stadium",
-    "kickoff": "2026-07-08T19:00:00Z"
+    "id": "wc2026-arg-egy",
+    "home": "Argentina",
+    "away": "Egypt",
+    "venue": "2026 FIFA World Cup — Round of 16",
+    "kickoff": "2026-07-07T16:00:00Z",
+    "note": "Real match, real goals (final score 3-2). Recorded from the ESPN feed for deterministic replay."
   },
   "events": [
     {
       "id": "evt-1",
       "type": "goal",
-      "minute": 23,
-      "team": "Portugal",
-      "player": "R. Leão",
-      "description": "Left-footed strike from inside the box, assisted by B. Fernandes"
+      "minute": 15,
+      "team": "Egypt",
+      "player": "Yasser Ibrahim",
+      "description": "Header — Egypt take a shock lead (real goal, 15')"
     },
     {
       "id": "evt-2",
       "type": "goal",
-      "minute": 58,
-      "team": "Spain",
-      "player": "Lamine Yamal",
-      "description": "Curled shot from the right wing into the far corner"
+      "minute": 67,
+      "team": "Egypt",
+      "player": "Mostafa Zico",
+      "description": "Egypt double the lead (real goal, 67')"
     },
     {
       "id": "evt-3",
       "type": "goal",
-      "minute": 74,
-      "team": "Portugal",
-      "player": "G. Ramos",
-      "description": "Header from a corner kick at the near post"
+      "minute": 79,
+      "team": "Argentina",
+      "player": "Cristian Romero",
+      "description": "Header — Argentina pull one back (real goal, 79')"
+    },
+    {
+      "id": "evt-4",
+      "type": "goal",
+      "minute": 83,
+      "team": "Argentina",
+      "player": "Lionel Messi",
+      "description": "Messi equalizes (real goal, 83')"
+    },
+    {
+      "id": "evt-5",
+      "type": "goal",
+      "minute": 92,
+      "team": "Argentina",
+      "player": "Enzo Fernández",
+      "description": "Header in stoppage time — the comeback is complete (real goal, 90'+2')"
     }
   ]
 }

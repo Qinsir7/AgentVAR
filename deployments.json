@@ -1,20 +1,20 @@
 {
   "chainId": 1439,
-  "truthOracle": "0x9106cFA018fE4E26C1745B709A4B7C261e89DE8f",
-  "parametricPool": "0x0F2133B65e35e83d0B32C290D6eD332bFE87c937",
+  "truthOracle": "0x92485534311C0D77aA2646904D6Fd55488473fb2",
+  "parametricPool": "0x6e4DFA9918FB2339FDAbA8d14f56c192cDcf14eB",
   "usdc": "0x0C382e685bbeeFE5d3d9C29e29E341fEE8E84C5d",
   "term": {
-    "team": "Portugal",
+    "team": "Argentina",
     "afterMinute": 45,
-    "beforeMinute": 75,
+    "beforeMinute": 90,
     "payoutUsdc": 1,
     "beneficiary": "0x6A955F252d2B140f5baB5E314e3cEB4930D09Fd8",
-    "description": "Pays 1 USDC if Portugal scores in the second half before the 75th minute"
+    "description": "Pays 1 USDC if Argentina scores in the second half before the 90th minute"
   },
-  "deployedAt": "2026-07-07T17:29:47.434Z",
+  "deployedAt": "2026-07-07T18:31:39.022Z",
   "txs": {
-    "deployTruthOracle": "0x7794998b2e92d535df72e94e429e48320dbf9d4b40bd057b6928fb225087fe32",
-    "deployParametricPool": "0xbf64aa129ba110f07a663c2243514c642161583a91d28c8731ff5d92c08b95e7",
-    "fundPool": "0xf31bb1e33afcfe6157bd7052030f0f1a20c23a4b4b5dbde6b37c37d721e3cd36"
+    "deployTruthOracle": "0x1688446c9ff5718d0743be61c0b6346adfa7f11fd680d399ad3ba2df1d9a924d",
+    "deployParametricPool": "0x58f64804c6ca5812f18ff1d5eb8c76c04563e1b13db21eb2a2dfb5c59ad1d4d0",
+    "fundPool": "0x1c2e3dfa970bf327af1cb867bdf24af79412c3d5d2081b63b7010bd1f3918915"
   }
 }

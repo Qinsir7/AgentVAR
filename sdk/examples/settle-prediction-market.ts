@@ -1,5 +1,5 @@
 /**
- * Example: a prediction market settling a "Spain to score vs Portugal" market
+ * Example: a prediction market settling a "Messi to score vs Egypt" market
  * with AgentVAR instead of a single trusted oracle.
  *
  * Run (against a live AgentVAR instance, `npm start`):
@@ -13,8 +13,8 @@ import "dotenv/config";
 import { AgentVARClient } from "../index.js";
 
 const market = {
-  question: "Will Spain score against Portugal?",
-  claim: { team: "Spain", minute: 91, player: "Mikel Merino" }, // 90'+1' goal, ESPN clock
+  question: "Will Messi score against Egypt?",
+  claim: { team: "Argentina", minute: 83, player: "Lionel Messi" }, // real goal, ARG 3-2 EGY R16
   poolYes: 12_400, // USDC staked on YES
   poolNo: 8_100, // USDC staked on NO
 };

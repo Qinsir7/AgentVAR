@@ -266,9 +266,9 @@
   <a class="brand" href="/"><span class="dot"></span>Agent<em>VAR</em><span class="back">← home</span></a>
 
   <div class="scoreboard">
-    <span class="team" id="team-home">PORTUGAL</span>
+    <span class="team" id="team-home">—</span>
     <span class="score"><em id="score-home">0</em> : <em id="score-away">0</em></span>
-    <span class="team" id="team-away">SPAIN</span>
+    <span class="team" id="team-away">—</span>
     <span class="clock" id="clock">0'</span>
   </div>
 
@@ -333,7 +333,7 @@
 const $ = (s) => document.querySelector(s);
 const jurorsEl = $("#jurors"), streamEl = $("#stream"), receiptsEl = $("#receipts");
 const jurorCards = {}, reviewBlocks = {}, reviewEvents = {};
-let teams = { home: "Portugal", away: "Spain" };
+let teams = { home: "Home", away: "Away" };
 const score = {};
 const initials = { "juror-1": "AL", "juror-2": "BR", "juror-3": "CH" };
 
@@ -515,11 +515,11 @@ function renderScore() {
   if (s.matchMode === "live") {
     mode.textContent = s.autoAdjudicate ? "LIVE · auto-watch" : "LIVE data";
     mode.className = "rail-badge injective";
-    if (s.liveMatch) teams = { home: s.liveMatch.home, away: s.liveMatch.away };
   } else {
-    mode.textContent = "Replay fixture";
+    mode.textContent = "Replay (real recorded match)";
     mode.className = "rail-badge mock";
   }
+  if (s.match) teams = { home: s.match.home, away: s.match.away };
   score[teams.home] = 0; score[teams.away] = 0;
   $("#team-home").textContent = teams.home.toUpperCase();
   $("#team-away").textContent = teams.away.toUpperCase();

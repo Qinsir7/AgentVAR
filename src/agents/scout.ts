@@ -14,7 +14,7 @@ import { findWorldCupMatch, fetchEspnGoals, setLiveMatch, getLiveMatch, type Liv
  * MATCH_MODE=live: tracks a real 2026 World Cup match via the ESPN public
  * API. Configure with:
  *   LIVE_DATE=YYYYMMDD  (default: today UTC)
- *   LIVE_TEAM=Portugal  (optional filter; otherwise first match of the day)
+ *   LIVE_TEAM=Argentina (optional filter; otherwise first match of the day)
  * Goals discovered on the feed become a queue you can step through with
  * "Next match event" — and while the match is in play the Scout keeps
  * polling, so with AUTO_ADJUDICATE=true new goals are adjudicated the
@@ -26,6 +26,7 @@ export class ScoutAgent {
   private cursor = 0;
   private seenGoalKeys = new Set<string>();
   private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private replayMatch: { home: string; away: string; venue?: string } | null = null;
 
   /** Set by the engine so auto-discovered goals can be adjudicated hands-free. */
   onAutoEvent: ((review: Review) => void) | null = null;
@@ -33,7 +34,12 @@ export class ScoutAgent {
   async init(): Promise<void> {
     if (this.mode === "replay") {
       const fixturePath = fileURLToPath(new URL("../../data/fixture.json", import.meta.url));
-      this.events = (JSON.parse(readFileSync(fixturePath, "utf-8")) as { events: MatchEvent[] }).events;
+      const fixture = JSON.parse(readFileSync(fixturePath, "utf-8")) as {
+        match: { home: string; away: string; venue?: string };
+        events: MatchEvent[];
+      };
+      this.events = fixture.events;
+      this.replayMatch = fixture.match;
       return;
     }
 
@@ -78,6 +84,13 @@ export class ScoutAgent {
 
   get liveMatch(): LiveMatch | null {
     return getLiveMatch();
+  }
+
+  /** Home/away of whatever match is being adjudicated, in either mode. */
+  get matchInfo(): { home: string; away: string; status?: string } | null {
+    const live = getLiveMatch();
+    if (live) return { home: live.home, away: live.away, status: live.status };
+    return this.replayMatch;
   }
 
   get remaining(): number {

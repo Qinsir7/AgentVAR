@@ -43,7 +43,7 @@ doesn't. A lying agent isn't slashed or sued — it just didn't make the sale.
    links), the parametric-term status, and the x402 receipt ticker. Demo
    controls: advance the match, inject a lie into Juror Charlie.
 2. **AI assistants via MCP**: attach the AgentVAR MCP server to Cursor/Claude
-   and ask *"did Portugal score before the 75th minute?"* — your assistant
+   and ask *"did Messi score against Egypt?"* — your assistant
    buys adjudicated truth with a real x402 payment.
 3. **HTTP API**: `POST /api/adjudicate` (x402-gated, 0.05 USDC) for any
    program that wants jury-verified match facts.
@@ -61,7 +61,7 @@ sequenceDiagram
     participant J3 as Juror Charlie
     participant O as TruthOracle (contract)
     participant P as ParametricPool (contract)
-    C->>A: x402 pay 0.05 USDC — "Did Portugal score at 74'?"
+    C->>A: x402 pay 0.05 USDC — "Did Argentina score at 79'?"
     par independent testimony
         A->>J1: testify
         A->>J2: testify
@@ -163,8 +163,8 @@ live deployment on Injective EVM Testnet:
 
 | Contract | Address |
 | --- | --- |
-| TruthOracle | [`0x9106cFA018fE4E26C1745B709A4B7C261e89DE8f`](https://testnet.blockscout.injective.network/address/0x9106cFA018fE4E26C1745B709A4B7C261e89DE8f) |
-| ParametricPool | [`0x0F2133B65e35e83d0B32C290D6eD332bFE87c937`](https://testnet.blockscout.injective.network/address/0x0F2133B65e35e83d0B32C290D6eD332bFE87c937) |
+| TruthOracle | [`0x92485534311C0D77aA2646904D6Fd55488473fb2`](https://testnet.blockscout.injective.network/address/0x92485534311C0D77aA2646904D6Fd55488473fb2) |
+| ParametricPool | [`0x6e4DFA9918FB2339FDAbA8d14f56c192cDcf14eB`](https://testnet.blockscout.injective.network/address/0x6e4DFA9918FB2339FDAbA8d14f56c192cDcf14eB) |
 | USDC (native Circle) | [`0x0C382e685bbeeFE5d3d9C29e29E341fEE8E84C5d`](https://testnet.blockscout.injective.network/address/0x0C382e685bbeeFE5d3d9C29e29E341fEE8E84C5d) |
 
 Example on-chain evidence from a full demo run: a
@@ -205,11 +205,11 @@ Optional: `npm run cctp 1` bridges 1 USDC from Sepolia into the pool via CCTP
 ### Live real-match mode (real 2026 World Cup data)
 
 ```bash
-# Adjudicate a real, finished knockout match (e.g. Portugal vs Spain, Jul 6):
-MATCH_MODE=live LIVE_DATE=20260706 LIVE_TEAM=Portugal npm start
+# Adjudicate a real, finished knockout match (e.g. Argentina 3-2 Egypt, Jul 7):
+MATCH_MODE=live LIVE_DATE=20260707 LIVE_TEAM=Argentina npm start
 
 # Or watch a match that is in play RIGHT NOW — hands-free:
-MATCH_MODE=live AUTO_ADJUDICATE=true npm start
+npm run start:live        # = MATCH_MODE=live AUTO_ADJUDICATE=true
 ```
 
 In live mode the jurors stop reading the recorded fixture and query real,
@@ -258,8 +258,9 @@ The full 5-act walkthrough (clean ruling → lie injection → cross-examination
   endpoint of the same provider, which weakens its independence (disclosed
   here, and visible in the juror card's source name). `MATCH_MODE=replay`
   (default) reads three differently-shaped replays of a recorded fixture —
-  deterministic, which is what the filmed demo uses so the lie-injection act
-  is reproducible.
+  the fixture itself is the **real Argentina 3-2 Egypt Round-of-16 comeback**
+  (all five real goals), but replayed deterministically so the filmed
+  lie-injection act is reproducible.
 - **The backdoor is a feature**: `POST /api/demo/arm-lie` makes Juror Charlie
   falsify its next testimony, so the punishment path can be proven on camera.
 - **LLM reasoning**: with `OPENAI_API_KEY` set, juror rationales, cross-exam
@@ -295,6 +296,6 @@ src/
 sdk/               AgentVARClient (x402-paying TypeScript client) + examples
 public/            landing page + Match Control Room dashboard
 skills/            agentvar-juror Agent Skill
-data/              recorded match fixture (POR vs ESP)
+data/              recorded real-match fixture (Argentina 3-2 Egypt, R16)
 docs/              demo script
 ```

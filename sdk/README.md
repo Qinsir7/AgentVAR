@@ -12,7 +12,7 @@ const client = new AgentVARClient({
 });
 
 // Pay 0.05 USDC (x402) → jury of 3 independent AI agents adjudicates the claim
-const ruling = await client.adjudicate({ team: "Spain", minute: 91 });
+const ruling = await client.adjudicate({ team: "Argentina", minute: 83 });
 // → { verdict: "confirmed", votes: [3 signed votes], anchorTxHash: "0x…", ... }
 
 // Trustless verification: check each juror's Ed25519 signature locally

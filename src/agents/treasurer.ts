@@ -32,10 +32,10 @@ export class TreasurerAgent {
         }
       : {
           id: "term-1",
-          description: "Pays 25 USDC if Portugal scores in the second half before the 75th minute",
-          team: "Portugal",
+          description: "Pays 25 USDC if Argentina scores in the second half before the 90th minute",
+          team: "Argentina",
           afterMinute: 45,
-          beforeMinute: 75,
+          beforeMinute: 90,
           payoutUsdc: 25,
           beneficiary: process.env.BENEFICIARY_ADDRESS || "demo-beneficiary-wallet",
           triggered: false,

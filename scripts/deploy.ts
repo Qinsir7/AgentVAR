@@ -21,12 +21,12 @@ import {
 } from "../src/shared/chain.js";
 
 const TERM = {
-  team: "Portugal",
+  team: process.env.TERM_TEAM ?? "Argentina",
   afterMinute: 45,
-  beforeMinute: 75,
+  beforeMinute: 90,
   payoutUsdc: Number(process.env.POOL_PAYOUT_USDC ?? 1),
 };
-const description = `Pays ${TERM.payoutUsdc} USDC if ${TERM.team} scores in the second half before the 75th minute`;
+const description = `Pays ${TERM.payoutUsdc} USDC if ${TERM.team} scores in the second half before the ${TERM.beforeMinute}th minute`;
 
 async function main() {
   const artifacts = loadArtifacts();

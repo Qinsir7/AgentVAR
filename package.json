@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
+    "start:live": "MATCH_MODE=live AUTO_ADJUDICATE=true tsx src/server.ts",
     "mcp": "tsx src/mcp/server.ts",
     "mcp:juror": "MCP_ROLE=juror tsx src/mcp/server.ts",
     "compile": "tsx scripts/compile.ts",
