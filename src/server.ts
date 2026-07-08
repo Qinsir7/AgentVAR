@@ -71,6 +71,7 @@ if (isInjectiveMode()) {
 const publicDir = fileURLToPath(new URL("../public", import.meta.url));
 app.use(express.static(publicDir));
 app.get("/dashboard", (_req, res) => res.sendFile(`${publicDir}/dashboard.html`));
+app.get("/observatory", (_req, res) => res.sendFile(`${publicDir}/observatory.html`));
 
 /** Full queryable state (also consumed by the MCP server). */
 app.get("/api/state", (_req, res) => res.json(engine.state()));

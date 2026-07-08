@@ -1,13 +1,20 @@
 # AgentVAR ⚽️
 
-**Football has VAR. AI has hallucinations.** AgentVAR is an autonomous
-referee crew: independent AI juror agents earn x402 micropayments (USDC on
-Injective) for truthful testimony about live World Cup events — lie once, and
-that testimony goes unpaid. Rulings are anchored on-chain and settle
-parametric contracts automatically. Truth as a business model, not a
-governance problem.
+**Football has VAR. AI has hallucinations.** AgentVAR is a **self-hosted
+truth service + SDK**: an autonomous referee crew you run with your own keys,
+where independent AI juror agents earn x402 micropayments (USDC on Injective)
+for truthful testimony about live World Cup events — lie once, and that
+testimony goes unpaid. Rulings are anchored on-chain and settle parametric
+contracts automatically. Truth as a business model, not a governance problem.
 
 > Built for [The Injective Global Cup](https://www.hackquest.io/hackathons/The-Injective-Global-Cup).
+>
+> **Hosted site**: [agent-var.vercel.app](https://agent-var.vercel.app/) — intro +
+> the [On-chain Observatory](https://agent-var.vercel.app/observatory.html),
+> a zero-backend page where **your browser reads the jury's rulings and the
+> insurance pool straight from Injective testnet**. The interactive Match
+> Control Room runs locally (see Quickstart) — nothing about the truth layer
+> requires trusting our deployment, only the chain.
 
 ---
 
@@ -36,21 +43,26 @@ doesn't. A lying agent isn't slashed or sued — it just didn't make the sale.
 
 **How you interact with it.**
 
-1. **Web app** (`npm start` → http://localhost:4402): a landing page that
-   explains the system, and the **Match Control Room** dashboard
-   (`/dashboard`) — live scoreboard, jury cards with USDC earnings, the
-   review stream (testimony → cross-examination → ruling, with explorer
-   links), the parametric-term status, and the x402 receipt ticker. Demo
-   controls: advance the match, inject a lie into Juror Charlie.
+1. **TypeScript SDK** ([`sdk/`](sdk/)): `AgentVARClient` for prediction
+   markets, betting apps or insurance products — pays x402 fees automatically
+   and verifies juror signatures locally. Try it:
+   `npm run sdk:example` (settles a demo prediction market against the jury).
 2. **AI assistants via MCP**: attach the AgentVAR MCP server to Cursor/Claude
    and ask *"did Messi score against Egypt?"* — your assistant
    buys adjudicated truth with a real x402 payment.
 3. **HTTP API**: `POST /api/adjudicate` (x402-gated, 0.05 USDC) for any
    program that wants jury-verified match facts.
-4. **TypeScript SDK** ([`sdk/`](sdk/)): `AgentVARClient` for prediction
-   markets, betting apps or insurance products — pays x402 fees automatically
-   and verifies juror signatures locally. Try it:
-   `npm run sdk:example` (settles a demo prediction market against the jury).
+4. **On-chain Observatory** (`/observatory.html`, also
+   [hosted](https://agent-var.vercel.app/observatory.html)): a static page —
+   no backend, no indexer — that reads every anchored ruling, the jury tally
+   (dissent visible), and the ParametricPool's term/balance/paid status
+   directly from Injective over JSON-RPC. Point it at any deployment with
+   `?oracle=0x…&pool=0x…`.
+5. **Match Control Room** (`npm start` → http://localhost:4402/dashboard,
+   local): the operator's view — live scoreboard, jury cards with USDC
+   earnings, the review stream (testimony → cross-examination → ruling, with
+   explorer links), and the x402 receipt ticker. Demo controls: advance the
+   match, inject a lie into Juror Charlie.
 
 ```mermaid
 sequenceDiagram
@@ -186,7 +198,12 @@ npm start          # → http://localhost:4402
 All agents, the jury economics, the lie injection and the payout run with
 simulated receipts (tagged `mock` in the UI).
 
-### Injective testnet mode (full integration)
+### Injective testnet mode (full integration, bring one key)
+
+Everything is generated from a single funded testnet key — wallets for every
+agent role, contract deployment, pool funding. Nothing depends on our
+infrastructure, so any judge (or juror operator) can stand up their own
+AgentVAR network in ~2 minutes and watch it in their own Observatory.
 
 ```bash
 cp .env.example .env
@@ -254,6 +271,11 @@ Open http://localhost:4402/dashboard and:
    button flips to 🏁 Full time.
 5. **Receipts** — in injective mode every receipt and ruling links to a real
    transaction on the Injective testnet explorer.
+6. **Verify without trusting the demo** — open the
+   [Observatory](https://agent-var.vercel.app/observatory.html) (or local
+   `/observatory.html`): the rulings you just made — verdicts, jury tallies
+   with the dissent visible, and the pool flipping to `PAID OUT` — read
+   directly from the chain by your browser.
 
 ---
 
@@ -305,7 +327,7 @@ src/
   engine.ts        wires the crew, keeps auditable state
   server.ts        HTTP API + x402 middleware + SSE + dashboard
 sdk/               AgentVARClient (x402-paying TypeScript client) + examples
-public/            landing page + Match Control Room dashboard
+public/            landing page + Match Control Room + On-chain Observatory (static)
 skills/            agentvar-juror Agent Skill
 data/              recorded real-match fixture (Argentina 3-2 Egypt, R16)
 ```

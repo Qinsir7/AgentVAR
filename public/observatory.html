@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AgentVAR — On-chain Observatory</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛓</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #070a08; --bg-soft: #0c110e; --line: rgba(120,160,135,.14); --line-strong: rgba(120,160,135,.28);
+    --text: #edf3ee; --dim: #93a89a; --faint: #5c6f63;
+    --green: #34d27b; --green-soft: rgba(52,210,123,.12); --gold: #e8c268; --red: #f0555b;
+    --display: "Space Grotesk", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--display); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+
+  nav { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(14px); background: rgba(7,10,8,.8); border-bottom: 1px solid var(--line); }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+  .brand { font-weight: 700; font-size: 17px; display: flex; align-items: center; gap: 10px; }
+  .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); }
+  .brand em { color: var(--green); font-style: normal; }
+  .nav-links { display: flex; gap: 22px; align-items: center; font-size: 13.5px; color: var(--dim); }
+  .nav-links a:hover { color: var(--text); }
+
+  header { padding: 48px 0 30px; }
+  .kicker { font-family: var(--mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--green); margin-bottom: 12px; }
+  h1 { font-size: clamp(26px, 4vw, 38px); font-weight: 700; letter-spacing: -.015em; }
+  .sub { color: var(--dim); margin-top: 10px; max-width: 720px; }
+  .sub code { font-family: var(--mono); font-size: 12.5px; color: var(--gold); background: rgba(232,194,104,.08); padding: 1px 6px; border-radius: 4px; }
+
+  .netbar {
+    margin: 26px 0 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    font-family: var(--mono); font-size: 12px; color: var(--dim);
+  }
+  .pill { border: 1px solid var(--line-strong); border-radius: 999px; padding: 5px 14px; background: var(--bg-soft); }
+  .pill b { color: var(--green); font-weight: 600; }
+  .pill.live::before { content: "●"; color: var(--green); margin-right: 7px; animation: blink 2s infinite; }
+  .pill.err::before { content: "●"; color: var(--red); margin-right: 7px; }
+  @keyframes blink { 50% { opacity: .35; } }
+
+  section { padding: 34px 0 6px; }
+  .sec-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  h2 { font-size: 19px; font-weight: 700; }
+  h2 .icon { margin-right: 8px; }
+  .addr { font-family: var(--mono); font-size: 12px; color: var(--faint); }
+  .addr a { color: var(--dim); border-bottom: 1px dashed var(--faint); }
+  .addr a:hover { color: var(--green); }
+
+  .panel { border: 1px solid var(--line); border-radius: 14px; background: var(--bg-soft); overflow: hidden; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); }
+  .cell { background: var(--bg-soft); padding: 18px 20px; }
+  .cell .k { font-size: 11.5px; color: var(--faint); text-transform: uppercase; letter-spacing: .08em; font-family: var(--mono); }
+  .cell .v { font-family: var(--mono); font-size: 17px; font-weight: 600; margin-top: 5px; word-break: break-all; }
+  .cell .v.green { color: var(--green); } .cell .v.gold { color: var(--gold); } .cell .v.red { color: var(--red); }
+  .cell .v .sm { font-size: 12px; color: var(--dim); font-weight: 400; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); text-align: left; padding: 12px 20px; border-bottom: 1px solid var(--line); }
+  td { padding: 12px 20px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  tr:hover td { background: rgba(52,210,123,.03); }
+  .mono { font-family: var(--mono); font-size: 12.5px; }
+  .verdict { font-family: var(--mono); font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 999px; letter-spacing: .05em; }
+  .verdict.yes { color: var(--green); background: var(--green-soft); border: 1px solid rgba(52,210,123,.3); }
+  .verdict.no { color: var(--red); background: rgba(240,85,91,.1); border: 1px solid rgba(240,85,91,.3); }
+  .txlink { font-family: var(--mono); font-size: 12px; color: var(--dim); border-bottom: 1px dashed var(--faint); }
+  .txlink:hover { color: var(--green); }
+  .empty { padding: 26px 20px; color: var(--faint); font-family: var(--mono); font-size: 13px; }
+
+  .svc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .svc-card { border: 1px solid var(--line); border-radius: 14px; background: var(--bg-soft); padding: 20px 22px; }
+  .svc-card h3 { font-size: 15px; margin-bottom: 2px; }
+  .svc-card .price { font-family: var(--mono); font-size: 13px; color: var(--gold); margin-bottom: 8px; }
+  .svc-card p { font-size: 12.5px; color: var(--dim); line-height: 1.55; }
+  .svc-card .ep { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 10px; word-break: break-all; }
+
+  .note { margin: 30px 0 50px; font-size: 13px; color: var(--faint); border-left: 2px solid var(--line-strong); padding-left: 14px; }
+  .note code { font-family: var(--mono); font-size: 11.5px; color: var(--gold); }
+  footer { border-top: 1px solid var(--line); padding: 24px 0 34px; color: var(--faint); font-size: 12.5px; font-family: var(--mono); }
+
+  @media (max-width: 860px) { .grid { grid-template-columns: repeat(2, 1fr); } .svc { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-inner">
+    <a class="brand" href="/"><span class="dot"></span>Agent<em>VAR</em></a>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="https://github.com/Qinsir7/AgentVAR" target="_blank" rel="noopener">GitHub</a>
+      <a id="explorer-link" href="https://testnet.blockscout.injective.network" target="_blank" rel="noopener">Explorer ↗</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <div class="kicker">On-chain Observatory</div>
+    <h1>Every ruling the jury ever made, read straight from Injective.</h1>
+    <p class="sub">
+      This page has no backend. Your browser is querying the <b style="color:var(--text)">TruthOracle</b> and
+      <b style="color:var(--text)">ParametricPool</b> contracts on Injective EVM Testnet directly over JSON-RPC —
+      the same adjudicated truth any settlement contract or SDK consumer reads.
+      Watching a different deployment? Append <code>?oracle=0x…&amp;pool=0x…</code>.
+    </p>
+    <div class="netbar">
+      <span class="pill live" id="net-pill">Injective EVM Testnet · chain <b>1439</b></span>
+      <span class="pill" id="block-pill">block —</span>
+      <span class="pill" id="rpc-pill">rpc: polkachu</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <h2><span class="icon">🏦</span>ParametricPool — self-settling insurance</h2>
+      <span class="addr" id="pool-addr"></span>
+    </div>
+    <div class="panel"><div class="grid" id="pool-grid">
+      <div class="cell"><div class="k">Term</div><div class="v sm" id="pool-term" style="font-size:13px;font-weight:400;color:var(--dim)">loading…</div></div>
+      <div class="cell"><div class="k">Payout</div><div class="v gold" id="pool-payout">—</div></div>
+      <div class="cell"><div class="k">Pool balance (USDC)</div><div class="v" id="pool-balance">—</div></div>
+      <div class="cell"><div class="k">Status</div><div class="v" id="pool-status">—</div></div>
+    </div></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <h2><span class="icon">⚖️</span>TruthOracle — adjudicated rulings</h2>
+      <span class="addr" id="oracle-addr"></span>
+    </div>
+    <div class="panel">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Review ID</th><th>Verdict</th><th>Team</th><th>Minute</th><th>Jury tally</th><th>Finalized</th><th>Anchor tx</th>
+        </tr></thead>
+        <tbody id="rulings-body">
+          <tr><td colspan="8" class="empty">querying the chain…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <h2><span class="icon">🛰</span>Service registry — what this network sells</h2>
+      <span class="addr">x402-priced endpoints, USDC on Injective</span>
+    </div>
+    <div class="svc">
+      <div class="svc-card">
+        <h3>⚖️ Adjudication service</h3>
+        <div class="price">0.05 USDC / ruling · x402</div>
+        <p>Full jury: 3 independent sources, 2/3 majority, cross-examination of dissent, on-chain anchor. Operated by the Arbiter agent.</p>
+        <div class="ep">POST /api/adjudicate · payTo <span id="svc-arbiter">arbiter wallet</span></div>
+      </div>
+      <div class="svc-card">
+        <h3>✍️ Juror testimony ×3</h3>
+        <div class="price">0.01 USDC / testimony · x402</div>
+        <p>A single juror's signed, reasoned testimony without convening the jury. Each juror is its own service with its own wallet — fees withheld from liars never leave the buyer.</p>
+        <div class="ep">POST /api/jurors/:id/testify · payTo the juror's wallet</div>
+      </div>
+      <div class="svc-card">
+        <h3>💸 Parametric settlement</h3>
+        <div class="price">free to claim · permissionless</div>
+        <p>Anyone may call <span class="mono">claim(reviewId)</span> — the pool re-verifies the ruling against the TruthOracle on-chain before releasing USDC. No claims process, no humans.</p>
+        <div class="ep">ParametricPool.claim(bytes32) · beneficiary <span id="svc-beneficiary">—</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="note">
+    Want the interactive Match Control Room (live testimonies, cross-examinations, x402 receipts)?
+    It runs locally against your own keys — <code>git clone</code> the repo, then <code>npm install && npm start</code>.
+    This observatory only shows what made it on-chain, which is the point: you don't have to trust the demo, only the chain.
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">AgentVAR · reads Injective EVM Testnet (1439) from your browser · no backend, no indexer</div>
+</footer>
+
+<script>
+const qs = new URLSearchParams(location.search);
+const DEFAULTS = {
+  rpc: "https://injectiveevm-testnet-rpc.polkachu.com",
+  explorer: "https://testnet.blockscout.injective.network",
+  oracle: "0x92485534311C0D77aA2646904D6Fd55488473fb2",
+  pool: "0x6e4DFA9918FB2339FDAbA8d14f56c192cDcf14eB",
+  usdc: "0x0C382e685bbeeFE5d3d9C29e29E341fEE8E84C5d",
+};
+const CFG = {
+  rpc: qs.get("rpc") || DEFAULTS.rpc,
+  explorer: DEFAULTS.explorer,
+  oracle: qs.get("oracle") || DEFAULTS.oracle,
+  pool: qs.get("pool") || DEFAULTS.pool,
+  usdc: qs.get("usdc") || DEFAULTS.usdc,
+};
+
+const SEL = {
+  rulingCount: "0x7e507128", reviewIds: "0xc40e33df", getRuling: "0xc21c2d49", arbiter: "0xfe25e00a",
+  termDescription: "0x983492d2", payoutAmount: "0x6b46c8c3", paid: "0x295b4e17",
+  beneficiary: "0x38af3eed", balanceOf: "0x70a08231",
+};
+const TOPIC_RULING = "0x4e0c4b9424d4a640513e9ef40e4cdbbfe15651039b5b10af0f89fa2635c4f269";
+const TOPIC_PAYOUT = "0x759c8b4be669de020af1bc6ea61d5414d010ba30e22badb7369f3bda08a963d7";
+const TEAMS = {"0xfd6ead0e674b72ce13e4942f77f7f9db537a495e8da2fb222757748be352188c":"Argentina","0xd4c1f4eaecffa0c583b1f60abacf2587c10c668fa31f7826c627139251bb9eed":"Egypt","0x37d749b28b3f109dec1a99ff3f1b379f2e6b04cd8435e7b462dc0d808fa9cc01":"Portugal","0x7bdbab7a0565f58f73766f53ea50bec0585265bfc279485c4b1b5e8edb5d458e":"Spain","0xc8f460617d11cbd77a1f9fa343a7009f0433a965de9dbde0e82b74ce1106fb38":"France","0x1680835548f3a525a4f12216a3ad76f764ad82d9c9541a8fa9d602181439d36e":"England","0x5d154efd01c5707f9f219c53d9a2e0e8445fe57f8b420cc856378c3d50cd543b":"Brazil","0xcbcfdbe5eb8eaa78138f6ebc7a1decd096eb01b5f9bed01e0e4b7cd56c394a72":"Germany","0x054fedf635b1f32b69ade29a00e08b37116696e490f1b0af31add8f7d4036729":"Netherlands","0x3194859f9ce18b3c673fe39e66b5523857f6ce60a9d713ed9decea1c00f55331":"Belgium","0xd17b173c03f969f4ff6c02fbc14ba23e644cb5194a89169c119e0788bf014b8c":"Italy","0x23f3470b95f5fb172a758e37d814e94bc3f7dcd58b6f93517860fddf65026b6d":"Croatia","0xb70375f2b366cedb83d968e89b1923b39f1a9819bf070919daeec1892de22c3a":"Uruguay","0x374d2c13b38a72bffb392684f81fa64868df10ee017b0a1786a084760c76075b":"Colombia","0x52b3e30607fbda3bb9eb1fd472bb34010d2d4920253165c4e50bd586c8e11935":"Mexico","0x7213b0bad1a93dcd8b75567b25de2dd8d5f5a4c9dbed1d4d6927c6b4f83d32bf":"United States","0x1f58b9cd9954f60e91b8efc8a2a1595da79e2d196b8a6aa18bb53dcf90e01f18":"Canada","0xebd0ac9350a58289baee6b9204b0609cfeca31f761c498c5b54f4c8fe229b14f":"Japan","0xd3ba6b95113e30c9fe5953ba0393df79694e40fe7f96d90d4367f3f77a6ef2a8":"South Korea","0xb9a66ed16610e221b886753c9cee674bc4fb0b2196d16916aee59981400a8952":"Morocco","0xd393a9a0c47b643421ca91ff490cdc74d87874d6188640330cb0935433ed126d":"Senegal","0xb0dc6779f1b8aeefe61d4448d8e3f085f4d2dfad53af452e94536a5068b222cc":"Ghana","0xc2a1ebc595b1e166a542a3c1af77f43476d5fc2a8dbce7100875de312189a803":"Nigeria","0x8ec7689e5099b1df60b71b1872a0c155c200cf0cb8a0172ebd30e0decf122c9a":"Australia","0x96a62d76b3f2cbe23b10674bb8c3ccd55d6836ab2645fc3a3f17fce7428d44c5":"Switzerland","0xf4a0c2d5f5f53d81d954de2ef62cefb418be7454e584ffca9bd758b0aa4ab6a7":"Denmark","0x62812097841d5ae3dd00c7fbe3157fad0b8118c15b2f5816f6831069f6056f82":"Poland","0x62815ea3afa44e7700bf19a665a9eb4b0b34bc8b9a77a60bc2747c1cec25cd15":"Ukraine","0x964eb8a5e13e62e1a51e6e350dcade7e1efc5be1b7b53d9f996e834b52aa73dd":"Austria","0x245d0de31bb8ba8809758ee626d56cce31940ad351e0a7274befad4dc6bdfb32":"Turkey","0x75e63b33e8004ddc26914d11ee0d92a90479a45343f95654e873d86789446e2b":"Ecuador","0xbf74b79acabe0d9f35cc5cd73667e21c8db98d3679138392e5844cf818ffde68":"Paraguay","0xf69c5ab61c8bbd42c60140458c0c2d5769172e493be248a7a82946dec96e6bd8":"Chile","0x082a5e8580f9b74bb17ce92572e05d7bf19847d2005b54d1436fc37cc3e5989a":"Peru","0x8c141e7ea815f06cceda035458e9782c310bb2995f231af7dd3f37f793a07559":"Ivory Coast","0x5852c92656dfb60f55bc4fb7734c7eb0243da1d681ca55019fee49dbab722ac2":"Algeria","0xe6434c01287183596a44c1f115dd876f25a5b2234808d0acd5e46933c9df0b0f":"Tunisia","0xb409c17cb4bccee68c04320b7d90eebc571a8551f6782747f80916d68b1bf153":"Cameroon","0xca948b6e0fdf30597333f3d0725a1c833a253ed4f7708465fa58c12ab4859665":"Mali","0x9ae8d56c305c3d49f799cda50309677ced97306eec5cba2c8db346d6af447177":"Norway","0x19b95b28b1b04733736f396ab29c6672d3869f407a7deb32483ad6a98af0b297":"Sweden","0x3e432e5f818af84ba84abe0d1c63c5d27838d78f00a300852ddfc7c05f3a807d":"Scotland","0xc9ef1bd4ad091b7c64e4039e0a2cf9cfd2afbc03ea8121de70dad20ee2e00105":"Wales","0x5735d151728b329d354d99173e80834896509b530535711698f93e46a6247513":"Serbia","0x9c8dcdd6be092e55cbeab9fe5642000b53dd9f95c2b2daff067698256ed683d5":"Greece","0x1acc8160341c48941f720c25c5c1edd4bbaa7bfa3584a149d238b1bb4a75a0f7":"Czechia","0xba766208f5579880373e7508e6ad4c57edad073638cab934e19185a83656fd90":"Panama","0x25eac313c1bf2d1ff7c729d532ea25983cdf08feca01e6d64b2196b7f2326adf":"Costa Rica","0x6f6ca45fb5ff8fabae19abf9c67f0bb2c75bba3b2bcf4c231f960f9517f64fff":"Honduras","0x7ce346e883a1cff8b9ed0f99e1c2e6ca6faecbe32865c1d3e667e51f684b6f8e":"Jordan","0x116f081a615f537158b36c291d9b1d4c790a2da94bd6616e959f4fc9370410f0":"Uzbekistan","0x027d2a60c61253a60ef47d3f0ed8fd078120b4700e19974d12ff57ab99726205":"Iran","0xf36fe4dacd1f18350edaf8f46967b4e66935b042bdad69220276106659461f52":"Saudi Arabia","0xb8a13e96a07aff1d51e41d0e7fc11143b7ee8643ba8292d001c02de6ee55e5f2":"Qatar","0xad9e4e78097aa90367b14912f6c416ca30b4444a23a4b4ebd77858b036603f93":"New Zealand","0x764f48942819b0026e4aee79b0de3f2590b0633d0cbc7d5e38ef9cd1fa39826b":"South Africa","0xb7c139be87bea16044aae5d23e326992e021e981c547b746b265862d9a14604a":"Cape Verde","0x086caf2fa9ddcd23e9ae53a87d0b7bf342946caab3aae9d7820595ffafc23586":"Curacao","0xeb089a7cdac7e61a737f17912d529d578872a76e3d6669ae65fb6721449e7089":"Haiti"};
+
+let rpcId = 0;
+async function rpc(method, params) {
+  const res = await fetch(CFG.rpc, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: ++rpcId, method, params }),
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.result;
+}
+const call = (to, data) => rpc("eth_call", [{ to, data }, "latest"]);
+const word = (hex, i) => "0x" + hex.slice(2).slice(i * 64, (i + 1) * 64);
+const toNum = (w) => Number(BigInt(w));
+const toAddr = (w) => "0x" + w.slice(-40);
+const pad32 = (hex) => hex.slice(2).padStart(64, "0");
+const short = (h) => h.slice(0, 10) + "…" + h.slice(-6);
+function decodeString(hex) {
+  const body = hex.slice(2);
+  const len = Number(BigInt("0x" + body.slice(64, 128)));
+  const bytes = body.slice(128, 128 + len * 2);
+  return decodeURIComponent(bytes.replace(/(..)/g, "%$1"));
+}
+const $ = (s) => document.querySelector(s);
+const addrLink = (a) => `<a href="${CFG.explorer}/address/${a}" target="_blank" rel="noopener">${short(a)}</a>`;
+
+async function loadPool() {
+  $("#pool-addr").innerHTML = addrLink(CFG.pool);
+  const [termHex, payoutHex, paidHex, benHex, balHex] = await Promise.all([
+    call(CFG.pool, SEL.termDescription),
+    call(CFG.pool, SEL.payoutAmount),
+    call(CFG.pool, SEL.paid),
+    call(CFG.pool, SEL.beneficiary),
+    call(CFG.usdc, SEL.balanceOf + pad32(CFG.pool)),
+  ]);
+  $("#pool-term").textContent = decodeString(termHex);
+  $("#pool-payout").textContent = (toNum(payoutHex) / 1e6).toFixed(2) + " USDC";
+  $("#pool-balance").textContent = (toNum(balHex) / 1e6).toFixed(2);
+  const paid = toNum(paidHex) === 1;
+  const st = $("#pool-status");
+  st.textContent = paid ? "PAID OUT" : "ARMED";
+  st.className = "v " + (paid ? "gold" : "green");
+  $("#svc-beneficiary").innerHTML = addrLink(toAddr(benHex));
+}
+
+async function loadRulings() {
+  $("#oracle-addr").innerHTML = addrLink(CFG.oracle);
+  call(CFG.oracle, SEL.arbiter).then((a) => ($("#svc-arbiter").innerHTML = addrLink(toAddr(a)))).catch(() => {});
+
+  // Anchor tx hashes come from recent RulingRecorded logs (RPC caps ranges at 10k blocks).
+  const txByReview = {};
+  try {
+    const latest = BigInt(await rpc("eth_blockNumber", []));
+    const from = latest > 9999n ? latest - 9999n : 0n;
+    const logs = await rpc("eth_getLogs", [{
+      address: [CFG.oracle, CFG.pool],
+      topics: [[TOPIC_RULING, TOPIC_PAYOUT]],
+      fromBlock: "0x" + from.toString(16), toBlock: "latest",
+    }]);
+    for (const log of logs) txByReview[log.topics[1]] = txByReview[log.topics[1]] ?? log.transactionHash;
+  } catch { /* logs are best-effort decoration */ }
+
+  const count = toNum(await call(CFG.oracle, SEL.rulingCount));
+  const body = $("#rulings-body");
+  if (count === 0) {
+    body.innerHTML = `<tr><td colspan="8" class="empty">no rulings anchored yet — run the crew locally and adjudicate a match</td></tr>`;
+    return;
+  }
+  const ids = await Promise.all(
+    Array.from({ length: count }, (_, i) => call(CFG.oracle, SEL.reviewIds + i.toString(16).padStart(64, "0")))
+  );
+  const rulings = await Promise.all(ids.map((id) => call(CFG.oracle, SEL.getRuling + id.slice(2))));
+
+  body.innerHTML = rulings.map((r, i) => {
+    const confirmed = toNum(word(r, 1)) === 1;
+    const teamHash = word(r, 2);
+    const minute = toNum(word(r, 3));
+    const tally = toNum(word(r, 4)), jurors = toNum(word(r, 5));
+    const at = new Date(toNum(word(r, 7)) * 1000);
+    const tx = txByReview[ids[i]];
+    return `<tr>
+      <td class="mono">${i + 1}</td>
+      <td class="mono" title="${ids[i]}">${short(ids[i])}</td>
+      <td><span class="verdict ${confirmed ? "yes" : "no"}">${confirmed ? "CONFIRMED" : "DENIED"}</span></td>
+      <td>${TEAMS[teamHash] ?? `<span class="mono" title="${teamHash}">${short(teamHash)}</span>`}</td>
+      <td class="mono">${minute}'</td>
+      <td class="mono" style="color:${tally === jurors ? "var(--green)" : "var(--gold)"}">${tally}/${jurors}${tally < jurors ? " ⚠ dissent" : ""}</td>
+      <td class="mono" style="color:var(--faint)">${at.toISOString().replace("T", " ").slice(0, 16)} UTC</td>
+      <td>${tx ? `<a class="txlink" href="${CFG.explorer}/tx/${tx}" target="_blank" rel="noopener">${short(tx)}</a>` : `<span class="mono" style="color:var(--faint)">older than log window</span>`}</td>
+    </tr>`;
+  }).join("");
+}
+
+(async function init() {
+  $("#rpc-pill").textContent = "rpc: " + new URL(CFG.rpc).hostname;
+  try {
+    const bn = await rpc("eth_blockNumber", []);
+    $("#block-pill").textContent = "block " + Number(BigInt(bn)).toLocaleString();
+    await Promise.all([loadPool(), loadRulings()]);
+    setInterval(() => { loadPool().catch(() => {}); loadRulings().catch(() => {}); }, 30_000);
+  } catch (e) {
+    const pill = $("#net-pill");
+    pill.className = "pill err";
+    pill.textContent = "RPC unreachable: " + e.message;
+    $("#rulings-body").innerHTML = `<tr><td colspan="8" class="empty">could not reach ${CFG.rpc} — try ?rpc=&lt;another endpoint&gt;</td></tr>`;
+  }
+})();
+</script>
+
+</body>
+</html>

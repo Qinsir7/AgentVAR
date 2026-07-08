@@ -221,11 +221,12 @@
     <a class="brand" href="/"><span class="dot"></span>Agent<em>VAR</em></a>
     <div class="nav-links">
       <a href="#how">How it works</a>
-      <a href="#crew">The crew</a>
       <a href="#economics">Economics</a>
       <a href="#tech">Injective tech</a>
       <a href="#build">SDK</a>
-      <a class="btn btn-primary" href="/dashboard.html">Live dashboard →</a>
+      <a href="https://github.com/Qinsir7/AgentVAR" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn btn-ghost dashboard-cta" href="/dashboard.html" hidden>Control Room →</a>
+      <a class="btn btn-primary" href="/observatory.html">⛓ On-chain observatory</a>
     </div>
   </div>
 </nav>
@@ -241,8 +242,9 @@
       parametric contracts automatically — <b>no claims, no disputes, no humans</b>.
     </p>
     <div class="hero-ctas">
-      <a class="btn btn-primary" href="/dashboard.html">⚽ Open the live dashboard</a>
-      <a class="btn btn-ghost" href="#how">See how a ruling happens</a>
+      <a class="btn btn-primary" href="/observatory.html">⛓ See the rulings on-chain</a>
+      <a class="btn btn-ghost dashboard-cta" href="/dashboard.html" hidden>⚽ Open the Match Control Room</a>
+      <a class="btn btn-ghost" href="#run">Run it locally in 30s</a>
     </div>
     <div class="hero-stats">
       <div class="stat"><div class="n">3<em>×</em></div><div class="l">independent AI jurors, one data source each</div></div>
@@ -439,17 +441,54 @@ agentVar.verifyTestimony(t)           // ✅ local, trustless</pre></div>
   </div>
 </section>
 
-<section class="final">
+<section id="run">
   <div class="wrap">
-    <div class="sec-label" style="text-align:center">Match day</div>
-    <h2>The jury is seated.</h2>
-    <p class="sec-sub" style="text-align:center">
-      Replay a real World Cup match — or watch one live. Three agents argue about reality,
-      a lie gets injected and the economics punish it — every receipt on-chain.
+    <div class="sec-label">Run it yourself</div>
+    <h2>The crew runs on your machine, with your keys. That's the point.</h2>
+    <p class="sec-sub">
+      AgentVAR is self-hosted by design — portable, inspectable, no trusted operator.
+      This site is fully static: the intro you're reading, plus an
+      <a href="/observatory.html" style="color:var(--green);border-bottom:1px dashed var(--green)">observatory</a>
+      that reads the contracts straight from Injective. Everything interactive runs locally:
     </p>
-    <a class="btn btn-primary" style="font-size:16px;padding:14px 30px" href="/dashboard.html">⚽ Enter the dashboard</a>
+    <div class="sdk-snippet" style="max-width:760px;margin-top:28px"><pre>git clone https://github.com/Qinsir7/AgentVAR && cd AgentVAR && npm install
+
+# 30-second demo (no wallet, simulated payments)
+npm start                        # → localhost:4402/dashboard
+
+# Full on-chain mode — bring ONE funded testnet key (.env → FUNDER_PRIVATE_KEY)
+npm run setup && npm run deploy  # wallets, contracts, pool funding: automatic
+PAYMENT_RAIL=injective npm start # x402 + anchors + payouts, all real
+
+# Watch a real World Cup match, hands-free
+npm run start:live</pre></div>
+    <p class="sec-sub" style="margin-top:22px">
+      Replay a real World Cup match — or watch one live. Three agents argue about reality,
+      a lie gets injected and the economics punish it. Then refresh the
+      <a href="/observatory.html" style="color:var(--green);border-bottom:1px dashed var(--green)">observatory</a> —
+      your rulings are on-chain for anyone to verify.
+    </p>
   </div>
 </section>
+
+<section class="final">
+  <div class="wrap">
+    <div class="sec-label" style="text-align:center">Trust the chain, not the demo</div>
+    <h2>The jury is seated.</h2>
+    <p class="sec-sub" style="text-align:center">
+      Every ruling, every micropayment, every payout — a real transaction on Injective EVM testnet.
+    </p>
+    <a class="btn btn-primary" style="font-size:16px;padding:14px 30px" href="/observatory.html">⛓ Open the on-chain observatory</a>
+  </div>
+</section>
+
+<script>
+// The Match Control Room needs the local agent crew (SSE + engine state).
+// Only surface its links when this page is actually served by that process.
+fetch("/api/state", { signal: AbortSignal.timeout(1500) })
+  .then((r) => { if (r.ok) document.querySelectorAll(".dashboard-cta").forEach((el) => (el.hidden = false)); })
+  .catch(() => {});
+</script>
 
 <footer>
   <div class="wrap foot">
