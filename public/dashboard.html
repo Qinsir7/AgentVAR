@@ -63,17 +63,20 @@
   .scoreboard .score em { color: var(--green); font-style: normal; }
   .scoreboard .clock { font-size: 11px; color: var(--gold); border: 1px solid rgba(232,194,104,.3); border-radius: 6px; padding: 2px 8px; }
 
-  .top-right { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+  .top-right { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
   .rail-badge {
     font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
-    padding: 5px 12px; border-radius: 8px;
+    display: inline-flex; align-items: center; height: 34px; padding: 0 13px; border-radius: 10px;
+    border: 1px solid transparent;
   }
-  .rail-badge.mock { color: var(--gold); background: var(--gold-soft); border: 1px solid rgba(232,194,104,.3); }
-  .rail-badge.injective { color: var(--green); background: var(--green-soft); border: 1px solid rgba(52,210,123,.35); }
+  .rail-badge.mock { color: var(--gold); background: var(--gold-soft); border-color: rgba(232,194,104,.3); }
+  .rail-badge.injective { color: var(--green); background: var(--green-soft); border-color: rgba(52,210,123,.35); }
+  .rail-badge.link { color: var(--dim); border-color: var(--line-strong); text-decoration: none; transition: all .15s ease; }
+  .rail-badge.link:hover { color: var(--green); border-color: var(--green); }
 
   .btn {
     font-family: var(--display); font-weight: 600; font-size: 13.5px;
-    padding: 9px 18px; border-radius: 10px; cursor: pointer;
+    height: 34px; padding: 0 16px; border-radius: 10px; cursor: pointer;
     border: 1px solid transparent; transition: all .15s ease;
     display: inline-flex; align-items: center; gap: 8px;
   }
@@ -273,7 +276,7 @@
   </div>
 
   <div class="top-right">
-    <a class="rail-badge mock" href="/observatory.html" target="_blank" rel="noopener" style="text-decoration:none" title="Verify rulings on-chain">⛓ observatory</a>
+    <a class="rail-badge link" href="/observatory.html" target="_blank" rel="noopener" title="Verify rulings on-chain">⛓ observatory</a>
     <span class="rail-badge mock" id="mode">…</span>
     <span class="rail-badge mock" id="rail">…</span>
     <button class="btn btn-danger" id="arm">🕳 Inject lie · Charlie</button>
@@ -507,7 +510,29 @@ function renderScore() {
 }
 
 (async function init() {
-  const s = await (await fetch("/api/state")).json();
+  let s;
+  try {
+    s = await (await fetch("/api/state", { signal: AbortSignal.timeout(4000) })).json();
+  } catch {
+    // Served statically (e.g. the hosted site) — the Control Room needs the local crew.
+    document.body.innerHTML = `
+      <div style="min-height:100vh;display:grid;place-items:center;padding:32px;text-align:center">
+        <div style="max-width:560px">
+          <div style="font-size:44px;margin-bottom:18px">🎛</div>
+          <h1 style="font-size:26px;margin-bottom:14px">The Match Control Room runs locally.</h1>
+          <p style="color:var(--dim);line-height:1.7;margin-bottom:26px">
+            This is the operator's live console — it needs the AgentVAR agent crew running on your machine
+            (with your own keys). The hosted site only serves what doesn't require trust:
+            the intro and the on-chain observatory.
+          </p>
+          <p style="font-family:var(--mono);font-size:13px;color:var(--gold);background:rgba(232,194,104,.08);border:1px solid rgba(232,194,104,.25);border-radius:10px;padding:14px 18px;margin-bottom:26px">
+            git clone https://github.com/Qinsir7/AgentVAR<br/>cd AgentVAR && npm install && npm start
+          </p>
+          <a href="/observatory.html" style="color:var(--green);border-bottom:1px dashed var(--green);text-decoration:none">⛓ See the rulings on-chain instead →</a>
+        </div>
+      </div>`;
+    return;
+  }
   const rail = $("#rail");
   rail.textContent = s.paymentRail === "injective" ? "Injective EVM Testnet" : "Mock rail";
   rail.className = "rail-badge " + s.paymentRail;

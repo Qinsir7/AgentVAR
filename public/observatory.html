@@ -114,6 +114,7 @@
       <span class="pill live" id="net-pill">Injective EVM Testnet · chain <b>1439</b></span>
       <span class="pill" id="block-pill">block —</span>
       <span class="pill" id="rpc-pill">rpc: polkachu</span>
+      <span class="pill" id="refresh-pill" title="Re-queries the chain automatically">auto-refresh 30s · updated —</span>
     </div>
   </div>
 </header>
@@ -312,13 +313,24 @@ async function loadRulings() {
   }).join("");
 }
 
+let lastRefresh = 0;
+setInterval(() => {
+  if (!lastRefresh) return;
+  $("#refresh-pill").textContent = `auto-refresh 30s · updated ${Math.round((Date.now() - lastRefresh) / 1000)}s ago`;
+}, 1000);
+
+async function refreshAll() {
+  const bn = await rpc("eth_blockNumber", []);
+  $("#block-pill").textContent = "block " + Number(BigInt(bn)).toLocaleString();
+  await Promise.all([loadPool(), loadRulings()]);
+  lastRefresh = Date.now();
+}
+
 (async function init() {
   $("#rpc-pill").textContent = "rpc: " + new URL(CFG.rpc).hostname;
   try {
-    const bn = await rpc("eth_blockNumber", []);
-    $("#block-pill").textContent = "block " + Number(BigInt(bn)).toLocaleString();
-    await Promise.all([loadPool(), loadRulings()]);
-    setInterval(() => { loadPool().catch(() => {}); loadRulings().catch(() => {}); }, 30_000);
+    await refreshAll();
+    setInterval(() => refreshAll().catch(() => {}), 30_000);
   } catch (e) {
     const pill = $("#net-pill");
     pill.className = "pill err";
