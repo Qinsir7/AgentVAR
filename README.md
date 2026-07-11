@@ -175,8 +175,8 @@ live deployment on Injective EVM Testnet:
 
 | Contract | Address |
 | --- | --- |
-| TruthOracle | [`0x92485534311C0D77aA2646904D6Fd55488473fb2`](https://testnet.blockscout.injective.network/address/0x92485534311C0D77aA2646904D6Fd55488473fb2) |
-| ParametricPool | [`0x6e4DFA9918FB2339FDAbA8d14f56c192cDcf14eB`](https://testnet.blockscout.injective.network/address/0x6e4DFA9918FB2339FDAbA8d14f56c192cDcf14eB) |
+| TruthOracle | [`0xDa888FE76bF8E210E0deb1DbADBcb8170C7f46a0`](https://testnet.blockscout.injective.network/address/0xDa888FE76bF8E210E0deb1DbADBcb8170C7f46a0) |
+| ParametricPool | [`0xf137a9e6d956A1bFb7643136d62Cc92dc40b016B`](https://testnet.blockscout.injective.network/address/0xf137a9e6d956A1bFb7643136d62Cc92dc40b016B) |
 | USDC (native Circle) | [`0x0C382e685bbeeFE5d3d9C29e29E341fEE8E84C5d`](https://testnet.blockscout.injective.network/address/0x0C382e685bbeeFE5d3d9C29e29E341fEE8E84C5d) |
 
 Example on-chain evidence from a full demo run: a

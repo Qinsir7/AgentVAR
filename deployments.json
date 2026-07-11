@@ -1,7 +1,7 @@
 {
   "chainId": 1439,
-  "truthOracle": "0x92485534311C0D77aA2646904D6Fd55488473fb2",
-  "parametricPool": "0x6e4DFA9918FB2339FDAbA8d14f56c192cDcf14eB",
+  "truthOracle": "0xDa888FE76bF8E210E0deb1DbADBcb8170C7f46a0",
+  "parametricPool": "0xf137a9e6d956A1bFb7643136d62Cc92dc40b016B",
   "usdc": "0x0C382e685bbeeFE5d3d9C29e29E341fEE8E84C5d",
   "term": {
     "team": "Argentina",
@@ -11,10 +11,10 @@
     "beneficiary": "0x6A955F252d2B140f5baB5E314e3cEB4930D09Fd8",
     "description": "Pays 1 USDC if Argentina scores in the second half before the 90th minute"
   },
-  "deployedAt": "2026-07-07T18:31:39.022Z",
+  "deployedAt": "2026-07-11T07:11:46.535Z",
   "txs": {
-    "deployTruthOracle": "0x1688446c9ff5718d0743be61c0b6346adfa7f11fd680d399ad3ba2df1d9a924d",
-    "deployParametricPool": "0x58f64804c6ca5812f18ff1d5eb8c76c04563e1b13db21eb2a2dfb5c59ad1d4d0",
-    "fundPool": "0x1c2e3dfa970bf327af1cb867bdf24af79412c3d5d2081b63b7010bd1f3918915"
+    "deployTruthOracle": "0x46d38774c1d2c6842841ca61cf54d2a7a327e4921cde4d8f3eadb8c090f4ffa4",
+    "deployParametricPool": "0xd1772b3096e64f11fa6023171c2df7a5e1905842295d13fabd752cdf14b0bec2",
+    "fundPool": "0x53fcdca299b12fa76b17af3b9c5c8eb1b3db4368bc8133792b852e4113b7e948"
   }
 }
